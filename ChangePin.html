@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change PIN - SecureBank</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            background: #faf8f2;
+        }
+
+        /* ATM Background - Dark Blue with Cream Accents */
+        .atm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 20%, #2c3e50 40%, #34495e 60%, #4a6078 80%, #e8dcc0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            z-index: 1;
+        }
+
+        .atm-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(245, 245, 220, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 20, 25, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(15, 20, 25, 0.6) 0%, rgba(245, 245, 220, 0.1) 100%);
+            animation: pulseBackground 6s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ATM Machine Silhouette */
+        .atm-machine {
+            position: absolute;
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(135deg, #0f1419, #1a2332, #2c3e50);
+            border-radius: 20px 0 0 20px;
+            box-shadow: -30px 0 60px rgba(15, 20, 25, 0.5);
+            z-index: 2;
+            opacity: 0.4;
+            border-left: 3px solid rgba(245, 245, 220, 0.3);
+        }
+
+        .atm-machine::before {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 40px;
+            width: 200px;
+            height: 120px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
+            border: 3px solid #34495e;
+            box-shadow: inset 0 0 20px rgba(245, 245, 220, 0.1);
+        }
+
+        .atm-machine::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 40px;
+            width: 150px;
+            height: 20px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(245, 245, 220, 0.2);
+        }
+
+        /* Floating elements */
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .float-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.15;
+            animation: floatUp 25s infinite linear;
+            color: #d4c4a0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.3;
+                transform: translateY(50vh) translateX(50px) rotate(180deg);
+            }
+            95% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(-30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Luxury Pattern Overlay */
+        .dollar-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 245, 220, 0.2) 10px, rgba(245, 245, 220, 0.2) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 196, 160, 0.1) 10px, rgba(212, 196, 160, 0.1) 20px);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Main container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* PIN Change Card */
+        .pin-change-card {
+            background: rgba(255, 253, 248, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            padding: 3rem;
+            box-shadow: 
+                0 30px 60px rgba(15, 20, 25, 0.4),
+                0 0 100px rgba(52, 73, 94, 0.3),
+                0 0 150px rgba(245, 245, 220, 0.2),
+                inset 0 1px 0 rgba(255, 253, 248, 0.5);
+            border: 2px solid rgba(245, 245, 220, 0.8);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 500px;
+            animation: slideInScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .pin-change-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(245, 245, 220, 0.15), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes slideInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f5f5dc, #f0ead6, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 
+                0 20px 40px rgba(212, 196, 160, 0.5),
+                0 0 60px rgba(245, 245, 220, 0.4);
+            animation: logoFloat 4s ease-in-out infinite;
+            border: 3px solid rgba(245, 245, 220, 0.8);
+            position: relative;
+        }
+
+        .bank-logo::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: linear-gradient(45deg, #faf8f2, #f5f5dc, #f0ead6, #ede4d1, #e8dcc0);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            z-index: -1;
+            animation: gradientRotate 4s linear infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(5deg); }
+            75% { transform: translateY(-5px) rotate(-3deg); }
+        }
+
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b7d5d 0%, #a0906c 50%, #d4c4a0 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 40px rgba(212, 196, 160, 0.4);
+            text-align: center;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .subtitle {
+            color: #6b5f47;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .security-info {
+            background: rgba(245, 245, 220, 0.4);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(212, 196, 160, 0.3);
+            text-align: center;
+        }
+
+        .security-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .security-text {
+            color: #6b5f47;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #6b5f47;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pin-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            font-size: 1.2rem;
+            border: 2px solid rgba(212, 196, 160, 0.4);
+            border-radius: 15px;
+            background: rgba(255, 253, 248, 0.8);
+            color: #5d5342;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.3rem;
+            text-align: center;
+            font-weight: 700;
+            backdrop-filter: blur(10px);
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: #d4c4a0;
+            background: rgba(255, 253, 248, 0.95);
+            box-shadow: 
+                0 0 0 4px rgba(212, 196, 160, 0.2),
+                0 15px 35px rgba(212, 196, 160, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .pin-input::placeholder {
+            color: #a0906c;
+            letter-spacing: 0.2rem;
+        }
+
+        .pin-requirements {
+            background: rgba(255, 253, 248, 0.6);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(212, 196, 160, 0.3);
+        }
+
+        .requirement-item {
+            color: #6b5f47;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .requirement-icon {
+            font-size: 1rem;
+            color: #4CAF50;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1.2rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 
+                0 15px 35px rgba(76, 175, 80, 0.5),
+                0 0 50px rgba(69, 160, 73, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(76, 175, 80, 0.7),
+                0 0 80px rgba(69, 160, 73, 0.6);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f5f5dc 0%, #f0ead6 100%);
+            color: #6b5f47;
+            box-shadow: 
+                0 15px 35px rgba(245, 245, 220, 0.5),
+                0 0 50px rgba(240, 234, 214, 0.4);
+            border: 2px solid rgba(212, 196, 160, 0.6);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(245, 245, 220, 0.7),
+                0 0 80px rgba(240, 234, 214, 0.6);
+        }
+
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: none;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        .message.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .warning-message {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+            box-shadow: 0 10px 25px rgba(255, 152, 0, 0.3);
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .atm-machine {
+                display: none;
+            }
+            
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .pin-change-card {
+                padding: 2rem;
+                border-radius: 20px;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .pin-change-card {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+            
+            .bank-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="atm-background"></div>
+    <div class="atm-machine"></div>
+    <div class="dollar-pattern"></div>
+    
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <div class="main-container">
+        <div class="pin-change-card">
+            <div class="card-content">
+                <div class="bank-logo">🔐</div>
+                <h1 class="main-title">Change PIN</h1>
+                <p class="subtitle">Secure your account with a new PIN</p>
+                
+                <div class="security-info">
+                    <div class="security-icon">🛡️</div>
+                    <div class="security-text">
+                        Your PIN is encrypted and stored securely. For your protection, choose a PIN that's easy to remember but difficult for others to guess.
+                    </div>
+                </div>
+                
+                <div id="messageContainer"></div>
+                
+                <form id="pinChangeForm">
+                    <div class="form-group">
+                        <label class="form-label" for="cardNumber">Card Number</label>
+                        <input type="text" id="cardNumber" class="pin-input" 
+                               placeholder="1234 5678 9012 3456" 
+                               maxlength="19" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="currentPin">Current PIN</label>
+                        <input type="password" id="currentPin" class="pin-input" 
+                               placeholder="••••" 
+                               maxlength="4" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="newPin">New PIN</label>
+                        <input type="password" id="newPin" class="pin-input" 
+                               placeholder="••••" 
+                               maxlength="4" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPin">Confirm New PIN</label>
+                        <input type="password" id="confirmPin" class="pin-input" 
+                               placeholder="••••" 
+                               maxlength="4" required>
+                    </div>
+                    
+                    <div class="pin-requirements">
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            PIN must be exactly 4 digits
+                        </div>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            Avoid sequential numbers (1234, 4321)
+                        </div>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            Avoid repeating numbers (1111, 2222)
+                        </div>
+                        <div class="requirement-item">
+                            <span class="requirement-icon">✓</span>
+                            Don't use personal dates or obvious patterns
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="action-btn btn-primary" id="changePinBtn">
+                        <span>🔒</span>
+                        <span>Change PIN</span>
+                        <div class="loading-spinner" id="loadingSpinner"></div>
+                    </button>
+                </form>
+                
+                <button type="button" class="action-btn btn-secondary" onclick="goBack()">
+                    <span>⬅️</span>
+                    <span>Back to Dashboard</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // API Configuration
+        // API Configuration
+        const API_BASE_URL = '/atm';
+        const API_USERNAME = 'your_username';
+        const API_PASSWORD = 'your_password';
+
+        // Create floating elements
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const icons = ['🔐', '🛡️', '🔒', '🔑', '💳', '✨', '⚡', '🌟', '💎', '🎯', '🔧', '⚙️'];
+            const count = 15;
+            
+            for (let i = 0; i < count; i++) {
+                const element = document.createElement('div');
+                element.className = 'float-icon';
+                element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                
+                element.style.left = (Math.random() * 90 + 5) + '%';
+                element.style.animationDelay = (Math.random() * 25) + 's';
+                element.style.animationDuration = (Math.random() * 10 + 20) + 's';
+                element.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
+                
+                container.appendChild(element);
+            }
+        }
+
+        // Format card number input
+        function formatCardNumber(input) {
+            let value = input.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            if (formattedValue.length > 19) {
+                formattedValue = formattedValue.substring(0, 19);
+            }
+            input.value = formattedValue;
+        }
+
+        // Validate PIN format
+        function validatePin(pin) {
+            if (pin.length !== 4) return false;
+            if (!/^\d{4}$/.test(pin)) return false;
+            
+            // Check for sequential numbers
+            const sequential = ['0123', '1234', '2345', '3456', '4567', '5678', '6789', '7890', '9876', '8765', '7654', '6543', '5432', '4321', '3210'];
+            if (sequential.includes(pin)) return false;
+            
+            // Check for repeating numbers
+            if (pin[0] === pin[1] && pin[1] === pin[2] && pin[2] === pin[3]) return false;
+            
+            return true;
+        }
+
+        // Display message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="message ${type}-message" style="display: block;">${message}</div>`;
+            
+            setTimeout(() => {
+                const messageEl = container.querySelector('.message');
+                if (messageEl) {
+                    messageEl.style.display = 'none';
+                }
+            }, 5000);
+        }
+
+        // Change PIN API call
+        async function changePIN(cardNumber, newPin) {
+            try {
+                const credentials = btoa(`${API_USERNAME}:${API_PASSWORD}`);
+                const cleanCardNumber = cardNumber.replace(/\s+/g, '');
+                
+                const response = await fetch(`${API_BASE_URL}/change-pin/${cleanCardNumber}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${credentials}`
+                    },
+                    body: JSON.stringify({
+                        newPin: newPin
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error changing PIN:', error);
+                throw error;
+            }
+        }
+
+        // Verify current PIN
+        async function verifyCurrentPin(cardNumber, currentPin) {
+            try {
+                const credentials = btoa(`${API_USERNAME}:${API_PASSWORD}`);
+                const cleanCardNumber = cardNumber.replace(/\s+/g, '');
+                
+                const response = await fetch(`${API_BASE_URL}/verify-pin/${cleanCardNumber}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${credentials}`
+                    },
+                    body: JSON.stringify({
+                        pin: currentPin
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result.isValid;
+            } catch (error) {
+                console.error('Error verifying PIN:', error);
+                throw error;
+            }
+        }
+
+        // Show loading state
+        function showLoading(button) {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<span class="loading-spinner"></span>Processing...';
+            button.disabled = true;
+            return originalText;
+        }
+
+        // Hide loading state
+        function hideLoading(button, originalText) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+
+        // PIN input restriction (only numbers, max 4 digits)
+        function restrictPinInput(input) {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                if (value.length > 4) {
+                    value = value.substring(0, 4);
+                }
+                e.target.value = value;
+            });
+        }
+
+        // Go back to dashboard
+        function goBack() {
+            // In a real application, this would navigate to the dashboard
+            if (confirm('Are you sure you want to go back? Any unsaved changes will be lost.')) {
+                window.history.back();
+            }
+        }
+
+        // Initialize form
+        function initializeForm() {
+            const cardNumberInput = document.getElementById('cardNumber');
+            const currentPinInput = document.getElementById('currentPin');
+            const newPinInput = document.getElementById('newPin');
+            const confirmPinInput = document.getElementById('confirmPin');
+            const form = document.getElementById('pinChangeForm');
+
+            // Format card number on input
+            cardNumberInput.addEventListener('input', function() {
+                formatCardNumber(this);
+            });
+
+            // Restrict PIN inputs to numbers only
+            restrictPinInput(currentPinInput);
+            restrictPinInput(newPinInput);
+            restrictPinInput(confirmPinInput);
+
+            // Real-time validation for new PIN
+            newPinInput.addEventListener('input', function() {
+                const pin = this.value;
+                if (pin.length === 4) {
+                    if (!validatePin(pin)) {
+                        this.style.borderColor = '#ff6b6b';
+                        showMessage('PIN does not meet security requirements', 'error');
+                    } else {
+                        this.style.borderColor = '#4CAF50';
+                    }
+                } else {
+                    this.style.borderColor = '';
+                }
+            });
+
+            // Confirm PIN validation
+            confirmPinInput.addEventListener('input', function() {
+                const newPin = newPinInput.value;
+                const confirmPin = this.value;
+                
+                if (confirmPin.length === 4) {
+                    if (newPin !== confirmPin) {
+                        this.style.borderColor = '#ff6b6b';
+                        showMessage('PINs do not match', 'error');
+                    } else {
+                        this.style.borderColor = '#4CAF50';
+                    }
+                } else {
+                    this.style.borderColor = '';
+                }
+            });
+
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const cardNumber = cardNumberInput.value.trim();
+                const currentPin = currentPinInput.value.trim();
+                const newPin = newPinInput.value.trim();
+                const confirmPin = confirmPinInput.value.trim();
+                const submitButton = document.getElementById('changePinBtn');
+
+                // Validation
+                if (!cardNumber || cardNumber.replace(/\s+/g, '').length !== 16) {
+                    showMessage('Please enter a valid 16-digit card number', 'error');
+                    return;
+                }
+
+                if (!currentPin || currentPin.length !== 4) {
+                    showMessage('Please enter your current 4-digit PIN', 'error');
+                    return;
+                }
+
+                if (!newPin || newPin.length !== 4) {
+                    showMessage('Please enter a new 4-digit PIN', 'error');
+                    return;
+                }
+
+                if (!validatePin(newPin)) {
+                    showMessage('New PIN does not meet security requirements', 'error');
+                    return;
+                }
+
+                if (newPin !== confirmPin) {
+                    showMessage('PINs do not match', 'error');
+                    return;
+                }
+
+                if (currentPin === newPin) {
+                    showMessage('New PIN must be different from current PIN', 'error');
+                    return;
+                }
+
+                // Show loading state
+                const originalText = showLoading(submitButton);
+
+                try {
+                    // First verify the current PIN
+                    const isCurrentPinValid = await verifyCurrentPin(cardNumber, currentPin);
+                    
+                    if (!isCurrentPinValid) {
+                        showMessage('Current PIN is incorrect', 'error');
+                        return;
+                    }
+
+                    // Change the PIN
+                    const result = await changePIN(cardNumber, newPin);
+                    
+                    if (result.success) {
+                        showMessage('PIN changed successfully! Your new PIN is now active.', 'success');
+                        
+                        // Clear form after successful change
+                        setTimeout(() => {
+                            form.reset();
+                            // Reset input styles
+                            [cardNumberInput, currentPinInput, newPinInput, confirmPinInput].forEach(input => {
+                                input.style.borderColor = '';
+                            });
+                        }, 2000);
+                        
+                        // Optional: Redirect to dashboard after success
+                        setTimeout(() => {
+                            if (confirm('PIN changed successfully! Would you like to return to the dashboard?')) {
+                                goBack();
+                            }
+                        }, 3000);
+                    } else {
+                        showMessage(result.message || 'Failed to change PIN. Please try again.', 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('PIN change error:', error);
+                    showMessage('An error occurred while changing your PIN. Please try again later.', 'error');
+                } finally {
+                    // Hide loading state
+                    hideLoading(submitButton, originalText);
+                }
+            });
+        }
+
+        // Enhanced security check
+        function performSecurityCheck() {
+            // Check if page is loaded over HTTPS in production
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                showMessage('This page requires a secure connection. Please use HTTPS.', 'error');
+                return false;
+            }
+
+            // Check if user session is valid (mock implementation)
+            const userSession = sessionStorage.getItem('userSession');
+            if (!userSession) {
+                showMessage('Session expired. Please log in again.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 3000);
+                return false;
+            }
+
+            return true;
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Perform security check
+            if (!performSecurityCheck()) {
+                return;
+            }
+
+            // Create floating elements
+            createFloatingElements();
+            
+            // Initialize form
+            initializeForm();
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Escape key to go back
+                if (e.key === 'Escape') {
+                    goBack();
+                }
+                
+                // Enter key to submit form when all fields are filled
+                if (e.key === 'Enter') {
+                    const form = document.getElementById('pinChangeForm');
+                    const inputs = form.querySelectorAll('input[required]');
+                    const allFilled = Array.from(inputs).every(input => input.value.trim() !== '');
+                    
+                    if (allFilled) {
+                        form.dispatchEvent(new Event('submit'));
+                    }
+                }
+            });
+
+            // Add focus trap for accessibility
+            const firstInput = document.getElementById('cardNumber');
+            const lastButton = document.querySelector('.btn-secondary');
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstInput) {
+                            e.preventDefault();
+                            lastButton.focus();
+                        }
+                    } else {
+                        if (document.activeElement === lastButton) {
+                            e.preventDefault();
+                            firstInput.focus();
+                        }
+                    }
+                }
+            });
+
+            // Auto-focus first input
+            setTimeout(() => {
+                firstInput.focus();
+            }, 500);
+        });
+
+        // Add visibility change handler to clear sensitive data
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Clear sensitive data when page becomes hidden
+                const sensitiveInputs = ['currentPin', 'newPin', 'confirmPin'];
+                sensitiveInputs.forEach(id => {
+                    const input = document.getElementById(id);
+                    if (input) {
+                        input.value = '';
+                        input.style.borderColor = '';
+                    }
+                });
+            }
+        });
+
+        // Prevent form resubmission on page reload
+        window.addEventListener('beforeunload', function() {
+            const form = document.getElementById('pinChangeForm');
+            if (form) {
+                form.reset();
+            }
+        });
+    </script>
+</body>
+</html>

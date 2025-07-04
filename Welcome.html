@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulation - Welcome</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            background: #faf8f2;
+        }
+
+        /* ATM Background - Dark Blue with Cream Accents */
+        .atm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 20%, #2c3e50 40%, #34495e 60%, #4a6078 80%, #e8dcc0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            z-index: 1;
+        }
+
+        .atm-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(245, 245, 220, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 20, 25, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(15, 20, 25, 0.6) 0%, rgba(245, 245, 220, 0.1) 100%);
+            animation: pulseBackground 6s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ATM Machine Silhouette - Enhanced Dark Blue */
+        .atm-machine {
+            position: absolute;
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(135deg, #0f1419, #1a2332, #2c3e50);
+            border-radius: 20px 0 0 20px;
+            box-shadow: -30px 0 60px rgba(15, 20, 25, 0.5);
+            z-index: 2;
+            opacity: 0.4;
+            border-left: 3px solid rgba(245, 245, 220, 0.3);
+        }
+
+        .atm-machine::before {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 40px;
+            width: 200px;
+            height: 120px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
+            border: 3px solid #34495e;
+            box-shadow: inset 0 0 20px rgba(245, 245, 220, 0.1);
+        }
+
+        .atm-machine::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 40px;
+            width: 150px;
+            height: 20px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(245, 245, 220, 0.2);
+        }
+
+        /* Floating elements */
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .float-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.15;
+            animation: floatUp 25s infinite linear;
+            color: #d4c4a0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.3;
+                transform: translateY(50vh) translateX(50px) rotate(180deg);
+            }
+            95% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(-30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Main container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .welcome-card {
+            background: rgba(255, 253, 248, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            padding: 3.5rem 3rem;
+            box-shadow: 
+                0 30px 60px rgba(15, 20, 25, 0.4),
+                0 0 100px rgba(52, 73, 94, 0.3),
+                0 0 150px rgba(245, 245, 220, 0.2),
+                inset 0 1px 0 rgba(255, 253, 248, 0.5);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid rgba(245, 245, 220, 0.8);
+            animation: slideInScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(245, 245, 220, 0.15), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes slideInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .bank-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #f5f5dc, #f0ead6, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            box-shadow: 
+                0 20px 40px rgba(212, 196, 160, 0.5),
+                0 0 60px rgba(245, 245, 220, 0.4);
+            animation: logoFloat 4s ease-in-out infinite;
+            position: relative;
+            border: 3px solid rgba(245, 245, 220, 0.8);
+        }
+
+        .bank-logo::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: linear-gradient(45deg, #faf8f2, #f5f5dc, #f0ead6, #ede4d1, #e8dcc0);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            z-index: -1;
+            animation: gradientRotate 4s linear infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(5deg); }
+            75% { transform: translateY(-5px) rotate(-3deg); }
+        }
+
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b7d5d 0%, #a0906c 50%, #d4c4a0 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 40px rgba(212, 196, 160, 0.4);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: #8b7d5d;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+ 
+
+        .tagline {
+            font-size: 1rem;
+            color: #a0906c;
+            font-style: italic;
+            margin-bottom: 2.5rem;
+        }
+
+        /* Buttons */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .action-btn {
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #d4c4a0 0%, #c9b896 100%);
+            color: #5d5342;
+            box-shadow: 
+                0 15px 35px rgba(212, 196, 160, 0.5),
+                0 0 50px rgba(201, 184, 150, 0.4);
+            border: 2px solid rgba(245, 245, 220, 0.6);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(212, 196, 160, 0.7),
+                0 0 80px rgba(201, 184, 150, 0.6);
+        }
+
+        .btn-register {
+            background: linear-gradient(135deg, #f5f5dc 0%, #f0ead6 100%);
+            color: #6b5f47;
+            box-shadow: 
+                0 15px 35px rgba(245, 245, 220, 0.5),
+                0 0 50px rgba(240, 234, 214, 0.4);
+            border: 2px solid rgba(212, 196, 160, 0.6);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(245, 245, 220, 0.7),
+                0 0 80px rgba(240, 234, 214, 0.6);
+        }
+
+        .btn-icon {
+            font-size: 1.4rem;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(245, 245, 220, 0.3);
+            border-radius: 15px;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(212, 196, 160, 0.4);
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            background: rgba(245, 245, 220, 0.4);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f5f5dc, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #6b5f47;
+            box-shadow: 
+                0 12px 25px rgba(212, 196, 160, 0.4),
+                0 0 30px rgba(245, 245, 220, 0.3);
+            border: 2px solid rgba(240, 234, 214, 0.6);
+        }
+
+        .feature-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6b5f47;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            font-size: 0.8rem;
+            color: #8b7d5d;
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(212, 196, 160, 0.4);
+            color: #a0906c;
+            font-size: 0.9rem;
+        }
+
+        /* Luxury Pattern Overlay */
+        .dollar-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 245, 220, 0.2) 10px, rgba(245, 245, 220, 0.2) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 196, 160, 0.1) 10px, rgba(212, 196, 160, 0.1) 20px);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .atm-machine {
+                display: none;
+            }
+            
+            .welcome-card {
+                padding: 2.5rem 2rem;
+                margin: 1rem;
+            }
+            
+            .main-title {
+                font-size: 2.2rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .action-btn {
+                padding: 1rem 2rem;
+                font-size: 1.1rem;
+            }
+        }
+
+        
+    </style>
+</head>
+<body>
+    <div class="atm-background"></div>
+    <div class="atm-machine"></div>
+    <div class="dollar-pattern"></div>
+    
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <div class="main-container">
+        <div class="welcome-card">
+            <div class="header">
+                <div class="bank-logo">👑</div>
+                <h1 class="main-title">SecureBank</h1>
+                <p class="subtitle">ATM Simulation System</p>
+                <p class="tagline">"Banking Made Simple & Secure"</p>
+            </div>
+            
+            <div class="button-container">
+                <button class="action-btn btn-login" onclick="handleLogin()">
+                    <span class="btn-icon">🔐</span>
+                    <a href="Login.html" style="color: #5d5342; text-decoration: none;"><span>Login to Your Account</span></a>
+                </button>
+                
+                <button class="action-btn btn-register" onclick="handleRegister()">
+                    <span class="btn-icon">✨</span>
+                    <a href="Register.html" style="color: #5d5342; text-decoration: none;"><span>Create New Account</span></a>
+                </button>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🛡️</div>
+                    <div class="feature-title">Secure</div>
+                    <div class="feature-desc">256-bit encryption</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Fast</div>
+                    <div class="feature-desc">Instant transactions</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🌐</div>
+                    <div class="feature-title">24/7</div>
+                    <div class="feature-desc">Always available</div>
+                </div>
+            </div>
+            
+            <div class="footer-info">
+                <p>🔒 Protected by advanced role-based authentication</p>
+                <p>© 2025 SecureBank ATM System</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating banking icons
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const icons = ['💎', '👑', '🏆', '⭐', '🔒', '🤍', '💰', '🎯', '✨', '🔐', '⚡', '🌟', '🪙', '💹', '🕊️'];
+            const count = 20;
+            
+            for (let i = 0; i < count; i++) {
+                const element = document.createElement('div');
+                element.className = 'float-icon';
+                element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                
+                // Better positioning and timing
+                element.style.left = (Math.random() * 90 + 5) + '%';
+                element.style.animationDelay = (Math.random() * 25) + 's';
+                element.style.animationDuration = (Math.random() * 10 + 20) + 's';
+                element.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
+                
+                // Add variety in horizontal movement
+                const randomX = (Math.random() - 0.5) * 200;
+                element.style.setProperty('--random-x', randomX + 'px');
+                
+                container.appendChild(element);
+            }
+            
+            // Add some delayed elements for continuous flow
+            setTimeout(() => {
+                for (let i = 0; i < 10; i++) {
+                    const element = document.createElement('div');
+                    element.className = 'float-icon';
+                    element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                    element.style.left = (Math.random() * 90 + 5) + '%';
+                    element.style.animationDelay = (Math.random() * 15) + 's';
+                    element.style.animationDuration = (Math.random() * 8 + 18) + 's';
+                    element.style.fontSize = (Math.random() * 0.8 + 1.2) + 'rem';
+                    container.appendChild(element);
+                }
+            }, 5000);
+        }
+
+        // Enhanced button interactions
+        function handleLogin() {
+            const btn = event.target.closest('.action-btn');
+            btn.style.transform = 'scale(0.95)';
+            
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            `;
+            
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+            
+            btn.appendChild(ripple);
+            
+            setTimeout(() => {
+                btn.style.transform = '';
+                ripple.remove();
+            }, 600);
+            
+            setTimeout(() => {
+                alert('🔐 Redirecting to Login Page...\n\nNext: We\'ll create the login form!');
+            }, 300);
+        }
+
+        function handleRegister() {
+            const btn = event.target.closest('.action-btn');
+            btn.style.transform = 'scale(0.95)';
+            
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            `;
+            
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+            
+            btn.appendChild(ripple);
+            
+            setTimeout(() => {
+                btn.style.transform = '';
+                ripple.remove();
+            }, 600);
+            
+            setTimeout(() => {
+                alert('✨ Redirecting to Registration Page...\n\nNext: We\'ll create the registration form!');
+            }, 300);
+        }
+
+        // Add ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Parallax effect for background
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            document.querySelector('.atm-background').style.backgroundPosition = 
+                `${50 + x * 0.1}% ${50 + y * 0.1}%`;
+        });
+
+        // Initialize animations
+        window.addEventListener('load', () => {
+            createFloatingElements();
+            
+            // Add entrance animation to features
+            const features = document.querySelectorAll('.feature-item');
+            features.forEach((feature, index) => {
+                feature.style.animationDelay = (index * 0.2) + 's';
+                feature.style.animation = 'slideInScale 0.8s ease forwards';
+            });
+        });
+
+        // Add interactive hover sound effect (visual feedback)
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.filter = 'brightness(1.1)';
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                btn.style.filter = 'brightness(1)';
+            });
+        });
+    </script>
+</body>
+</html>

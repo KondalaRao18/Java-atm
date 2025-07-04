@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulation - Registration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            background: #faf8f2;
+            overflow-x: hidden;
+        }
+
+        /* ATM Background - Dark Blue with Cream Accents */
+        .atm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 20%, #2c3e50 40%, #34495e 60%, #4a6078 80%, #e8dcc0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            z-index: 1;
+        }
+
+        .atm-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(245, 245, 220, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 20, 25, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(15, 20, 25, 0.6) 0%, rgba(245, 245, 220, 0.1) 100%);
+            animation: pulseBackground 6s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ATM Machine Silhouette */
+        .atm-machine {
+            position: fixed;
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(135deg, #0f1419, #1a2332, #2c3e50);
+            border-radius: 20px 0 0 20px;
+            box-shadow: -30px 0 60px rgba(15, 20, 25, 0.5);
+            z-index: 2;
+            opacity: 0.4;
+            border-left: 3px solid rgba(245, 245, 220, 0.3);
+        }
+
+        .atm-machine::before {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 40px;
+            width: 200px;
+            height: 120px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
+            border: 3px solid #34495e;
+            box-shadow: inset 0 0 20px rgba(245, 245, 220, 0.1);
+        }
+
+        .atm-machine::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 40px;
+            width: 150px;
+            height: 20px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(245, 245, 220, 0.2);
+        }
+
+        /* Floating elements */
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .float-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.15;
+            animation: floatUp 25s infinite linear;
+            color: #d4c4a0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.3;
+                transform: translateY(50vh) translateX(50px) rotate(180deg);
+            }
+            95% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(-30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Main container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .registration-card {
+            background: rgba(255, 253, 248, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            padding: 3.5rem 3rem;
+            box-shadow: 
+                0 30px 60px rgba(15, 20, 25, 0.4),
+                0 0 100px rgba(52, 73, 94, 0.3),
+                0 0 150px rgba(245, 245, 220, 0.2),
+                inset 0 1px 0 rgba(255, 253, 248, 0.5);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            border: 2px solid rgba(245, 245, 220, 0.8);
+            animation: slideInScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            margin: 2rem auto;
+        }
+
+        .registration-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(245, 245, 220, 0.15), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes slideInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f5f5dc, #f0ead6, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 
+                0 20px 40px rgba(212, 196, 160, 0.5),
+                0 0 60px rgba(245, 245, 220, 0.4);
+            animation: logoFloat 4s ease-in-out infinite;
+            position: relative;
+            border: 3px solid rgba(245, 245, 220, 0.8);
+        }
+
+        .bank-logo::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: linear-gradient(45deg, #faf8f2, #f5f5dc, #f0ead6, #ede4d1, #e8dcc0);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            z-index: -1;
+            animation: gradientRotate 4s linear infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(5deg); }
+            75% { transform: translateY(-5px) rotate(-3deg); }
+        }
+
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b7d5d 0%, #a0906c 50%, #d4c4a0 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 40px rgba(212, 196, 160, 0.4);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #8b7d5d;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        /* Step indicator */
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(212, 196, 160, 0.4);
+        }
+
+        .step.active {
+            background: linear-gradient(135deg, #d4c4a0, #c9b896);
+            color: #5d5342;
+            border-color: #d4c4a0;
+            box-shadow: 0 0 20px rgba(212, 196, 160, 0.5);
+        }
+
+        .step.completed {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .step.inactive {
+            background: rgba(245, 245, 220, 0.3);
+            color: #a0906c;
+        }
+
+        /* Form container */
+        .form-container {
+            text-align: left;
+        }
+
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+            animation: fadeInSlide 0.5s ease;
+        }
+
+        @keyframes fadeInSlide {
+            0% {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .form-row {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row.two-columns {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6b5f47;
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            font-size: 1rem;
+            border: 2px solid rgba(212, 196, 160, 0.4);
+            border-radius: 15px;
+            background: rgba(255, 253, 248, 0.8);
+            color: #5d5342;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #d4c4a0;
+            background: rgba(255, 253, 248, 0.95);
+            box-shadow: 
+                0 0 0 4px rgba(212, 196, 160, 0.2),
+                0 15px 35px rgba(212, 196, 160, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .form-input::placeholder {
+            color: #a0906c;
+            opacity: 0.7;
+        }
+
+        select.form-input {
+            cursor: pointer;
+        }
+
+        .card-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .pin-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 8px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        /* Security indicator */
+        .security-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #8b7d5d;
+        }
+
+        .security-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Buttons */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            flex: 1;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #d4c4a0 0%, #c9b896 100%);
+            color: #5d5342;
+            box-shadow: 
+                0 15px 35px rgba(212, 196, 160, 0.5),
+                0 0 50px rgba(201, 184, 150, 0.4);
+            border: 2px solid rgba(245, 245, 220, 0.6);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(212, 196, 160, 0.7),
+                0 0 80px rgba(201, 184, 150, 0.6);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f5f5dc 0%, #f0ead6 100%);
+            color: #6b5f47;
+            box-shadow: 
+                0 15px 35px rgba(245, 245, 220, 0.5),
+                0 0 50px rgba(240, 234, 214, 0.4);
+            border: 2px solid rgba(212, 196, 160, 0.6);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(245, 245, 220, 0.7),
+                0 0 80px rgba(240, 234, 214, 0.6);
+        }
+
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid #5d5342;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Message styles */
+        .error-message, .success-message {
+            display: none;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .error-message.show, .success-message.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(212, 196, 160, 0.4);
+            color: #a0906c;
+            font-size: 0.9rem;
+        }
+
+        /* Luxury Pattern Overlay */
+        .dollar-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 245, 220, 0.2) 10px, rgba(245, 245, 220, 0.2) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 196, 160, 0.1) 10px, rgba(212, 196, 160, 0.1) 20px);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .atm-machine {
+                display: none;
+            }
+            
+            .registration-card {
+                padding: 2.5rem 2rem;
+                margin: 1rem;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .action-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+            }
+            
+            .button-container {
+                flex-direction: column;
+            }
+            
+            .form-row.two-columns {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-container {
+                padding: 1rem;
+                align-items: flex-start;
+                padding-top: 2rem;
+            }
+        }
+
+        @media (max-height: 800px) {
+            .main-container {
+                align-items: flex-start;
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
+            
+            .registration-card {
+                margin: 1rem auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="atm-background"></div>
+    <div class="atm-machine"></div>
+    <div class="dollar-pattern"></div>
+    
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <div class="main-container">
+        <div class="registration-card">
+            <div class="header">
+                <div class="bank-logo">🏦</div>
+                <h1 class="main-title">Account Registration</h1>
+                <p class="subtitle">Create your secure banking profile</p>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">1</div>
+                <div class="step inactive" id="step2">2</div>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            
+            <div class="form-container">
+                <!-- Step 1: Personal Information -->
+                <div class="form-step active" id="personalInfoStep">
+                    <form id="personalInfoForm">
+                        <div class="form-row two-columns">
+                            <div class="form-group">
+                                <label class="form-label" for="fullName">
+                                    👤 Full Name
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="fullName" 
+                                    name="fullName"
+                                    class="form-input"
+                                    placeholder="Enter your full name"
+                                    required
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="dob">
+                                    📅 Date of Birth
+                                </label>
+                                <input 
+                                    type="date" 
+                                    id="dob" 
+                                    name="dob"
+                                    class="form-input"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-row two-columns">
+                            <div class="form-group">
+                                <label class="form-label" for="gender">
+                                    ⚧️ Gender
+                                </label>
+                                <select 
+                                    id="gender" 
+                                    name="gender"
+                                    class="form-input"
+                                    required
+                                >
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="phone">
+                                    📱 Phone Number
+                                </label>
+                                <input 
+                                    type="tel" 
+                                    id="phone" 
+                                    name="phone"
+                                    class="form-input"
+                                    placeholder="10-digit phone number"
+                                    maxlength="10"
+                                    pattern="[0-9]{10}"
+                                    required
+                                >
+                                <div class="security-indicator">
+                                    <div class="security-dot"></div>
+                                    <span>Used for secure notifications</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="email">
+                                📧 Email Address
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email"
+                                class="form-input"
+                                placeholder="your.email@example.com"
+                                required
+                            >
+                            <div class="security-indicator">
+                                <div class="security-dot"></div>
+                                <span>Primary communication channel</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="address">
+                                🏠 Address
+                            </label>
+                            <textarea 
+                                id="address" 
+                                name="address"
+                                class="form-input"
+                                placeholder="Enter your complete address"
+                                rows="3"
+                                required
+                            ></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 2: Card Details -->
+                <div class="form-step" id="cardDetailsStep">
+                    <form id="cardDetailsForm">
+                        <div class="form-group">
+                            <label class="form-label" for="cardNumber">
+                                💳 Card Number
+                            </label>
+                            <input 
+                                type="text" 
+                                id="cardNumber" 
+                                name="cardNumber"
+                                class="form-input card-input"
+                                placeholder="0000 0000 0000"
+                                maxlength="14"
+                                required
+                            >
+                            <div class="security-indicator">
+                                <div class="security-dot"></div>
+                                <span>12-digit unique card identifier</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row two-columns">
+                            <div class="form-group">
+                                <label class="form-label" for="pin">
+                                    🔢 PIN
+                                </label>
+                                <input 
+                                    type="password" 
+                                    id="pin" 
+                                    name="pin"
+                                    class="form-input pin-input"
+                                    placeholder="••••"
+                                    maxlength="4"
+                                    pattern="[0-9]{4}"
+                                    required
+                                >
+                                <div class="security-indicator">
+                                    <div class="security-dot"></div>
+                                    <span>4-digit secure PIN</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="confirmPin">
+                                    🔒 Confirm PIN
+                                </label>
+                                <input 
+                                    type="password" 
+                                    id="confirmPin" 
+                                    name="confirmPin"
+                                    class="form-input pin-input"
+                                    placeholder="••••"
+                                    maxlength="4"
+                                    pattern="[0-9]{4}"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="initialBalance">
+                                💰 Initial Balance
+                            </label>
+                            <input 
+                                type="number" 
+                                id="initialBalance" 
+                                name="initialBalance"
+                                class="form-input"
+                                placeholder="Enter initial deposit amount"
+                                min="100"
+                                step="0.01"
+                                required
+                            >
+                            <div class="security-indicator">
+                                <div class="security-dot"></div>
+                                <span>Minimum ₹100 required</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button class="action-btn btn-secondary" id="backBtn" onclick="goBack()">
+                    <span class="btn-icon">⬅️</span>
+                    <span>Back</span>
+                </button>
+                
+                <button class="action-btn btn-primary" id="nextBtn" onclick="nextStep()">
+                    <span id="nextBtnText">Next Step</span>
+                    <span class="btn-icon">➡️</span>
+                    <div class="loading-spinner" id="loadingSpinner"></div>
+                </button>
+            </div>
+            
+            <div class="footer-info">
+                <p>🔒 Your information is protected by bank-level security</p>
+                <p>© 2025 SecureBank ATM System</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        // API Configuration
+            const API_BASE_URL = '/atm';
+            const API_USERNAME = 'your_username';
+            const API_PASSWORD = 'your_password';
+
+            let currentStep = 1;
+            let userData = {};
+
+            // Create floating elements
+            function createFloatingElements() {
+                const container = document.getElementById('floatingElements');
+                const icons = ['🏦', '💳', '🔒', '💰', '⚡', '🌟', '💎', '🏆', '✨', '🔑', '💼', '👑'];
+                const count = 15;
+                
+                for (let i = 0; i < count; i++) {
+                    const element = document.createElement('div');
+                    element.className = 'float-icon';
+                    element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                    element.style.left = Math.random() * 100 + '%';
+                    element.style.animationDelay = Math.random() * 25 + 's';
+                    element.style.animationDuration = (20 + Math.random() * 10) + 's';
+                    container.appendChild(element);
+                }
+            }
+
+            // Initialize page
+            document.addEventListener('DOMContentLoaded', function() {
+                createFloatingElements();
+                updateStepIndicator();
+                updateButtonStates();
+                
+                // Add input event listeners
+                setupInputValidation();
+                
+                // Format card number input
+                const cardNumberInput = document.getElementById('cardNumber');
+                if (cardNumberInput) {
+                    cardNumberInput.addEventListener('input', formatCardNumber);
+                }
+                
+                // Phone number validation
+                const phoneInput = document.getElementById('phone');
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', validatePhoneNumber);
+                }
+                
+                // PIN confirmation validation
+                const confirmPinInput = document.getElementById('confirmPin');
+                if (confirmPinInput) {
+                    confirmPinInput.addEventListener('input', validatePinConfirmation);
+                }
+                
+                // Real-time PIN validation
+                const pinInput = document.getElementById('pin');
+                if (pinInput) {
+                    pinInput.addEventListener('input', validatePinConfirmation);
+                }
+            });
+
+            // Setup input validation
+            function setupInputValidation() {
+                const inputs = document.querySelectorAll('.form-input');
+                inputs.forEach(input => {
+                    input.addEventListener('blur', validateField);
+                    input.addEventListener('focus', clearFieldError);
+                });
+            }
+
+            // Validate individual field
+            function validateField(event) {
+                const field = event.target;
+                const value = field.value.trim();
+                
+                // Remove existing error styling
+                field.classList.remove('error');
+                
+                // Basic validation based on field type
+                switch(field.name) {
+                    case 'fullName':
+                        if (value.length < 2) {
+                            showFieldError(field, 'Name must be at least 2 characters long');
+                            return false;
+                        }
+                        break;
+                        
+                    case 'phone':
+                        if (!/^\d{10}$/.test(value)) {
+                            showFieldError(field, 'Phone number must be 10 digits');
+                            return false;
+                        }
+                        break;
+                        
+                    case 'email':
+                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                            showFieldError(field, 'Please enter a valid email address');
+                            return false;
+                        }
+                        break;
+                        
+                    case 'cardNumber':
+                        if (!/^\d{4}\s\d{4}\s\d{4}$/.test(value)) {
+                            showFieldError(field, 'Card number must be 12 digits');
+                            return false;
+                        }
+                        break;
+                        
+                    case 'pin':
+                        if (!/^\d{4}$/.test(value)) {
+                            showFieldError(field, 'PIN must be 4 digits');
+                            return false;
+                        }
+                        break;
+                        
+                    case 'initialBalance':
+                        if (parseFloat(value) < 100) {
+                            showFieldError(field, 'Minimum balance is ₹100');
+                            return false;
+                        }
+                        break;
+                }
+                
+                return true;
+            }
+
+            // Show field error
+            function showFieldError(field, message) {
+                field.classList.add('error');
+                field.style.borderColor = '#ff6b6b';
+                field.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+                
+                // Create or update error message
+                let errorElement = field.parentNode.querySelector('.field-error');
+                if (!errorElement) {
+                    errorElement = document.createElement('div');
+                    errorElement.className = 'field-error';
+                    errorElement.style.cssText = `
+                        color: #ff6b6b;
+                        font-size: 0.8rem;
+                        margin-top: 0.5rem;
+                        font-weight: 500;
+                    `;
+                    field.parentNode.appendChild(errorElement);
+                }
+                errorElement.textContent = message;
+            }
+
+            // Clear field error
+            function clearFieldError(event) {
+                const field = event.target;
+                field.classList.remove('error');
+                field.style.borderColor = '';
+                field.style.backgroundColor = '';
+                
+                const errorElement = field.parentNode.querySelector('.field-error');
+                if (errorElement) {
+                    errorElement.remove();
+                }
+            }
+
+            // Format card number with spaces
+            function formatCardNumber(event) {
+                let value = event.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                
+                if (formattedValue !== event.target.value) {
+                    event.target.value = formattedValue;
+                }
+            }
+
+            // Validate phone number (digits only)
+            function validatePhoneNumber(event) {
+                event.target.value = event.target.value.replace(/[^0-9]/g, '');
+            }
+
+            // Validate PIN confirmation
+            function validatePinConfirmation() {
+                const pin = document.getElementById('pin').value;
+                const confirmPin = document.getElementById('confirmPin').value;
+                const confirmField = document.getElementById('confirmPin');
+                
+                if (confirmPin && pin !== confirmPin) {
+                    showFieldError(confirmField, 'PINs do not match');
+                    return false;
+                } else if (confirmPin && pin === confirmPin) {
+                    clearFieldError({ target: confirmField });
+                    return true;
+                }
+                return true;
+            }
+
+            // Update step indicator
+            function updateStepIndicator() {
+                const steps = document.querySelectorAll('.step');
+                steps.forEach((step, index) => {
+                    const stepNumber = index + 1;
+                    step.classList.remove('active', 'completed', 'inactive');
+                    
+                    if (stepNumber < currentStep) {
+                        step.classList.add('completed');
+                    } else if (stepNumber === currentStep) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.add('inactive');
+                    }
+                });
+            }
+
+            // Update button states
+            function updateButtonStates() {
+                const backBtn = document.getElementById('backBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const nextBtnText = document.getElementById('nextBtnText');
+                
+                // Back button visibility
+                if (currentStep === 1) {
+                    backBtn.style.display = 'none';
+                    nextBtn.style.flex = '1';
+                } else {
+                    backBtn.style.display = 'flex';
+                    nextBtn.style.flex = '1';
+                }
+                
+                // Next button text
+                if (currentStep === 2) {
+                    nextBtnText.textContent = 'Complete Registration';
+                    nextBtn.querySelector('.btn-icon').textContent = '✅';
+                } else {
+                    nextBtnText.textContent = 'Next Step';
+                    nextBtn.querySelector('.btn-icon').textContent = '➡️';
+                }
+            }
+
+            // Show/hide form steps
+            function showStep(stepNumber) {
+                const steps = document.querySelectorAll('.form-step');
+                steps.forEach((step, index) => {
+                    if (index + 1 === stepNumber) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                });
+            }
+
+            // Validate current step
+            function validateCurrentStep() {
+                let isValid = true;
+                let currentForm;
+                
+                if (currentStep === 1) {
+                    currentForm = document.getElementById('personalInfoForm');
+                } else if (currentStep === 2) {
+                    currentForm = document.getElementById('cardDetailsForm');
+                }
+                
+                if (!currentForm) return false;
+                
+                const requiredFields = currentForm.querySelectorAll('[required]');
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        showFieldError(field, 'This field is required');
+                        isValid = false;
+                    } else {
+                        // Validate the field content
+                        if (!validateField({ target: field })) {
+                            isValid = false;
+                        }
+                    }
+                });
+                
+                // Additional validation for step 2
+                if (currentStep === 2) {
+                    if (!validatePinConfirmation()) {
+                        isValid = false;
+                    }
+                }
+                
+                return isValid;
+            }
+
+            // Collect form data
+            function collectFormData() {
+                const forms = document.querySelectorAll('form');
+                const formData = {};
+                
+                forms.forEach(form => {
+                    const inputs = form.querySelectorAll('.form-input');
+                    inputs.forEach(input => {
+                        if (input.name && input.value.trim()) {
+                            formData[input.name] = input.value.trim();
+                        }
+                    });
+                });
+                
+                return formData;
+            }
+
+            // Show message
+            function showMessage(message, type = 'error') {
+                const messageElement = document.getElementById(type === 'error' ? 'errorMessage' : 'successMessage');
+                const otherMessageElement = document.getElementById(type === 'error' ? 'successMessage' : 'errorMessage');
+                
+                // Hide other message
+                otherMessageElement.classList.remove('show');
+                otherMessageElement.textContent = '';
+                
+                // Show current message
+                messageElement.textContent = message;
+                messageElement.classList.add('show');
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    messageElement.classList.remove('show');
+                }, 5000);
+            }
+
+            // Hide all messages
+            function hideMessages() {
+                document.getElementById('errorMessage').classList.remove('show');
+                document.getElementById('successMessage').classList.remove('show');
+            }
+
+            // Show loading state
+            function showLoading(show = true) {
+                const nextBtn = document.getElementById('nextBtn');
+                const loadingSpinner = document.getElementById('loadingSpinner');
+                const nextBtnText = document.getElementById('nextBtnText');
+                
+                if (show) {
+                    nextBtn.disabled = true;
+                    loadingSpinner.style.display = 'block';
+                    nextBtnText.style.opacity = '0.6';
+                } else {
+                    nextBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
+                    nextBtnText.style.opacity = '1';
+                }
+            }
+
+            // Generate random card number
+            function generateCardNumber() {
+                let cardNumber = '';
+                for (let i = 0; i < 16; i++) {
+                    cardNumber += Math.floor(Math.random() * 10);
+                }
+                return cardNumber.replace(/(.{4})/g, '$1 ').trim();
+            }
+
+            // API call with authentication
+            async function makeApiCall(endpoint, method = 'POST', data = null) {
+                const credentials = btoa(`${API_USERNAME}:${API_PASSWORD}`);
+                
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${credentials}`
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    return result;
+                } catch (error) {
+                    console.error('API call failed:', error);
+                    throw error;
+                }
+            }
+
+            // Submit registration
+            async function submitRegistration(formData) {
+                try {
+                    showLoading(true);
+                    
+                    // Prepare data for API
+                    const registrationData = {
+                        fullName: formData.fullName,
+                        dateOfBirth: formData.dob,
+                        gender: formData.gender,
+                        phoneNumber: formData.phone,
+                        email: formData.email,
+                        address: formData.address,
+                        cardNumber: formData.cardNumber.replace(/\s/g, ''),
+                        pin: formData.pin,
+                        initialBalance: parseFloat(formData.initialBalance)
+                    };
+                    
+                    // Make API call
+                    const response = await makeApiCall('/register', 'POST', registrationData);
+                    
+                    if (response.success) {
+                        showMessage('Registration completed successfully! You can now use your ATM card.', 'success');
+                        
+                        // Store user data for potential future use
+                        userData = { ...registrationData, accountId: response.accountId };
+                        
+                        // Redirect to login page after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 3000);
+                        
+                    } else {
+                        throw new Error(response.message || 'Registration failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    
+                    // Show appropriate error message
+                    if (error.message.includes('card number already exists')) {
+                        showMessage('This card number is already registered. Please use a different card number.', 'error');
+                    } else if (error.message.includes('email already exists')) {
+                        showMessage('This email address is already registered. Please use a different email.', 'error');
+                    } else {
+                        showMessage('Registration failed. Please check your information and try again.', 'error');
+                    }
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Next step function
+            async function nextStep() {
+                hideMessages();
+                
+                // Validate current step
+                if (!validateCurrentStep()) {
+                    showMessage('Please fill in all required fields correctly.', 'error');
+                    return;
+                }
+                
+                if (currentStep === 1) {
+                    // Move to step 2
+                    currentStep = 2;
+                    showStep(currentStep);
+                    updateStepIndicator();
+                    updateButtonStates();
+                    
+                    // Auto-generate card number if empty
+                    const cardNumberField = document.getElementById('cardNumber');
+                    if (!cardNumberField.value.trim()) {
+                        cardNumberField.value = generateCardNumber();
+                    }
+                    
+                } else if (currentStep === 2) {
+                    // Complete registration
+                    const formData = collectFormData();
+                    await submitRegistration(formData);
+                }
+            }
+
+            // Go back function
+            function goBack() {
+                if (currentStep > 1) {
+                    hideMessages();
+                    currentStep--;
+                    showStep(currentStep);
+                    updateStepIndicator();
+                    updateButtonStates();
+                }
+            }
+
+            // Auto-generate card number button (optional enhancement)
+            function generateNewCardNumber() {
+                const cardNumberField = document.getElementById('cardNumber');
+                cardNumberField.value = generateCardNumber();
+                cardNumberField.focus();
+            }
+
+            // Add keyboard navigation
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    nextStep();
+                } else if (event.key === 'Escape') {
+                    hideMessages();
+                }
+            });
+
+            // Add form submission prevention
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    nextStep();
+                });
+            });
+
+            // Utility function to check if user is returning
+            function isReturningUser() {
+                return localStorage.getItem('atmUserData') !== null;
+            }
+
+            // Save user progress (optional)
+            function saveProgress() {
+                const formData = collectFormData();
+                localStorage.setItem('atmRegistrationProgress', JSON.stringify({
+                    step: currentStep,
+                    data: formData,
+                    timestamp: Date.now()
+                }));
+            }
+
+            // Load user progress (optional)
+            function loadProgress() {
+                const saved = localStorage.getItem('atmRegistrationProgress');
+                if (saved) {
+                    try {
+                        const progress = JSON.parse(saved);
+                        // Only load if saved within last hour
+                        if (Date.now() - progress.timestamp < 3600000) {
+                            // Fill form fields
+                            Object.keys(progress.data).forEach(key => {
+                                const field = document.querySelector(`[name="${key}"]`);
+                                if (field) {
+                                    field.value = progress.data[key];
+                                }
+                            });
+                            
+                            // Set current step
+                            currentStep = progress.step;
+                            showStep(currentStep);
+                            updateStepIndicator();
+                            updateButtonStates();
+                            
+                            showMessage('Your previous progress has been restored.', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error loading progress:', error);
+                    }
+                }
+            }
+
+            // Clear saved progress
+            function clearProgress() {
+                localStorage.removeItem('atmRegistrationProgress');
+            }
+
+            // Enhanced error handling
+            window.addEventListener('error', function(event) {
+                console.error('Global error:', event.error);
+                showMessage('An unexpected error occurred. Please refresh the page and try again.', 'error');
+            });
+
+            // Add form auto-save on input change
+            document.addEventListener('input', function(event) {
+                if (event.target.classList.contains('form-input')) {
+                    // Debounce the save operation
+                    clearTimeout(window.saveTimeout);
+                    window.saveTimeout = setTimeout(saveProgress, 1000);
+                }
+            });
+
+            // Initialize progress loading on page load
+            window.addEventListener('load', function() {
+                // Uncomment to enable progress restoration
+                // loadProgress();
+            });
+    </script>
+</body>
+</html>
