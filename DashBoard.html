@@ -285,6 +285,15 @@
             font-weight: 800;
             color: #2c3e50;
             margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .account-balance:hover {
+            transform: scale(1.05);
+            color: #d4c4a0;
+            text-shadow: 0 0 10px rgba(212, 196, 160, 0.6);
         }
 
         .account-number {
@@ -517,6 +526,22 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Balance reveal animation */
+        .balance-reveal {
+            animation: balanceGlow 0.3s ease-in-out;
+        }
+
+        @keyframes balanceGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(212, 196, 160, 0.6);
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 20px rgba(212, 196, 160, 1);
+                transform: scale(1.1);
+            }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .atm-machine {
@@ -618,9 +643,8 @@
                 <p class="welcome-message">Welcome back! Choose an option below</p>
                 
                 <div class="user-info">
-                    <div class="account-balance" id="accountBalance">Balance: $ XXXXX</div>
+                    <div class="account-balance" id="accountBalance" onclick="showBalance()">Balance: $ XXXXX</div>
                     <div class="account-number" id="accountNumber">Account: </div>
-                    <!-- <div class="account-number" id="accountNumber">Account: ****-****-3456</div> -->
                     <div class="last-login" id="lastLogin">Last login: Today at 2:45 PM</div>
                 </div>
             </div>
@@ -667,13 +691,7 @@
                     <a href="ChangePin.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Change PIN</h3></a>
                     <p class="menu-description">Update your PIN for enhanced security</p>
                 </div>
-                
-                <div class="menu-option" tabindex="0">
-                    <span class="menu-icon">📋</span>
-                    <h3 class="menu-title">Change Details</h3>
-                    <p class="menu-description">Update your Details</p>
-                </div> 
-
+        
                 <div class="menu-option logout"  tabindex="0">
                     <span class="menu-icon">🚪</span>
                     <a href="Welcome.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Logout</h3></a>
@@ -694,14 +712,14 @@
     </div>
 
     <script>
-                // API Configuration
+        // API Configuration
         const API_BASE_URL = '/atm';
-        const API_USERNAME = 'your_username';
-        const API_PASSWORD = 'your_password';
-
+        
         // Session management
         let sessionTimer = 900; // 15 minutes in seconds
         let timerInterval;
+        let currentBalance = null; // Store actual balance
+        let isBalanceVisible = false; // Track balance visibility
 
         // Create floating elements
         function createFloatingElements() {
@@ -789,52 +807,55 @@
             showMessage('✅ Session extended for 15 minutes', 'success');
         }
 
-        function maskCardNumber(cardNumber) {
-            const clean = cardNumber.replace(/\D/g, '').trim();
-            const last4 = clean.slice(-4);
-            return `****-****-${last4}`;
+        // Show balance for 3 seconds when clicked
+        function showBalance() {
+            if (isBalanceVisible) return; // Prevent multiple clicks
+            
+            const balanceElement = document.getElementById('accountBalance');
+            if (!currentBalance) return;
+            
+            isBalanceVisible = true;
+            
+            // Add animation class
+            balanceElement.classList.add('balance-reveal');
+            
+            // Show actual balance
+            const formattedBalance = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(currentBalance);
+            
+            balanceElement.textContent = `Balance: ${formattedBalance}`;
+            
+            // Hide balance after 3 seconds
+            setTimeout(() => {
+                balanceElement.textContent = 'Balance: $ XXXXX';
+                balanceElement.classList.remove('balance-reveal');
+                isBalanceVisible = false;
+            }, 3000);
         }
 
-        fetch(`http://localhost:8080/atm/card-number/by-user/${userId}`)
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch card number");
-                return res.text();
-            })
-            .then(cardNumber => {
-                const masked = maskCardNumber(cardNumber);
-                document.getElementById("accountNumber").textContent = `Account: ${masked}`;
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById("accountNumber").textContent = "Account: Not available";
-            });
-
-
-        // function maskCardNumber(cardNumber) {
-        //     const clean = cardNumber.replace(/\D/g, '');
-        //     const last4 = clean.slice(-4);
-        //     return `****-****-${last4}`;
-        // }
-
-        // // Fetch card number from backend
-        // async function fetchCardNumber() {
-        //     try {
-        //     const response = await fetch('http://localhost:8080/atm/card-number/1234567890');
-        //     const data = await response.text(); // Or `.json()` if it's an object
-        //     const masked = maskCardNumber(data);
-        //     document.getElementById('accountNumber').textContent = `Account: ${masked}`;
-        //     } catch (err) {
-        //     console.error('Error fetching card number:', err);
-        //     }
-        // }
-        // document.addEventListener('DOMContentLoaded', fetchCardNumber);
+        // Mask card number to show only last 2 digits
+        function maskCardNumber(cardNumber) {
+            const clean = cardNumber.replace(/\D/g, '').trim();
+            const last2 = clean.slice(-2);
+            return `****-****-**${last2}`;
+        }
 
         // Quick actions
         function quickBalance() {
             showLoading();
             setTimeout(() => {
                 showLoading(false);
-                showMessage('💰 Current Balance: $12,540.75', 'success');
+                if (currentBalance) {
+                    const formattedBalance = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD'
+                    }).format(currentBalance);
+                    showMessage(`💰 Current Balance: ${formattedBalance}`, 'success');
+                } else {
+                    showMessage('💰 Current Balance: $12,540.75', 'success');
+                }
                 extendSession();
                 createSparkles();
             }, 1500);
@@ -845,8 +866,14 @@
                 showLoading();
                 setTimeout(() => {
                     showLoading(false);
-                    // Update balance
-                    document.getElementById('accountBalance').textContent = 'Balance: $12,440.75';
+                    // Update balance if we have current balance
+                    if (currentBalance && currentBalance >= 100) {
+                        currentBalance -= 100;
+                        // Update the session storage
+                        const userData = JSON.parse(sessionStorage.getItem('atmUserData') || '{}');
+                        userData.balance = currentBalance;
+                        sessionStorage.setItem('atmUserData', JSON.stringify(userData));
+                    }
                     showMessage('✅ $100 withdrawn successfully! Please take your cash.', 'success');
                     extendSession();
                     createSparkles();
@@ -866,7 +893,7 @@
 
         // Reset dashboard to initial state
         function resetDashboard() {
-            document.getElementById('accountBalance').textContent = 'Balance: $12,540.75';
+            document.getElementById('accountBalance').textContent = 'Balance: $ XXXXX';
             document.getElementById('sessionTimer').style.color = '#a0906c';
             sessionTimer = 900;
             startSessionTimer();
@@ -967,40 +994,6 @@
             });
         }
 
-        // API simulation functions
-        async function simulateApiCall(endpoint, data = null) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // Simulate API responses
-                    switch (endpoint) {
-                        case 'balance':
-                            resolve({ balance: 12540.75, account: '****-****-****-3456' });
-                            break;
-                        case 'withdraw':
-                            resolve({ success: true, newBalance: 12440.75, transactionId: 'TXN-' + Date.now() });
-                            break;
-                        case 'deposit':
-                            resolve({ success: true, newBalance: 13040.75, transactionId: 'TXN-' + Date.now() });
-                            break;
-                        case 'history':
-                            resolve({
-                                transactions: [
-                                    { date: '2025-07-02', type: 'withdrawal', amount: -100.00, balance: 12440.75 },
-                                    { date: '2025-07-02', type: 'deposit', amount: 500.00, balance: 12540.75 },
-                                    { date: '2025-07-01', type: 'transfer', amount: -250.00, balance: 12040.75 }
-                                ]
-                            });
-                            break;
-                        case 'changePin':
-                            resolve({ success: true, message: 'PIN changed successfully' });
-                            break;
-                        default:
-                            reject(new Error('Unknown endpoint'));
-                    }
-                }, Math.random() * 2000 + 500); // Random delay between 0.5-2.5 seconds
-            });
-        }
-
         // Add accessibility features
         function initializeAccessibility() {
             // Add aria labels
@@ -1098,10 +1091,57 @@
             }
         }
 
+        function loadUserData() {
+            try {
+                const savedUserData = sessionStorage.getItem('atmUserData');
+                if (savedUserData) {
+                    const userData = JSON.parse(savedUserData);
+                    
+                    // Store balance for use in balance reveal
+                    currentBalance = userData.balance || 12540.75;
+                    
+                    // Keep balance hidden initially
+                    const balanceElement = document.getElementById('accountBalance');
+                    if (balanceElement) {
+                        balanceElement.textContent = 'Balance: $ XXXXX';
+                    }
+                    
+                    // Update card number display with only last 2 digits
+                    const accountElement = document.getElementById('accountNumber');
+                    if (accountElement && userData.cardNumber) {
+                        const maskedCard = maskCardNumber(userData.cardNumber);
+                        accountElement.textContent = `Account: ${maskedCard}`;
+                    }
+                    
+                    // Update customer name if you have a name element
+                    const nameElement = document.getElementById('customerName');
+                    if (nameElement && userData.customerName) {
+                        nameElement.textContent = userData.customerName;
+                    }
+                    
+                    console.log('✅ User data loaded successfully');
+                    return userData;
+                } else {
+                    console.warn('⚠️ No user data found - redirecting to login');
+                    window.location.href = 'login.html';
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Error loading user data:', error);
+                window.location.href = 'login.html';
+                return null;
+            }
+        }
+
         // Page load event
         window.addEventListener('load', () => {
-            loadSessionData();
-            initializeDashboard();
+            // Load user data first
+            const userData = loadUserData();
+            if (userData) {
+                // Only initialize dashboard if user is authenticated
+                loadSessionData();
+                initializeDashboard();
+            }
         });
 
         // Page unload event

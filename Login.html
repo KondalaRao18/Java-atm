@@ -763,7 +763,6 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                        // ❌ REMOVED: 'Authorization': `Basic ${credentials}`,
                     },
                     body: JSON.stringify({
                         cardNumber: cleanCardNumber,
@@ -784,10 +783,23 @@
                     throw new Error('Server error. Please try again later.');
                 }
 
-                const data = await response.json();
-                console.log('📦 Response data:', data);
-
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('📦 Response data:', data);
+                    
+                    // 🔥 IMPORTANT: Store user data for other pages to access
+                    const userData = {
+                        cardNumber: cleanCardNumber,
+                        balance: data.balance || 2450.75, // Use API balance or default
+                        accountNumber: data.accountNumber || ('ACC' + cleanCardNumber.slice(-6)),
+                        customerName: data.customerName || 'Account Holder',
+                        isAuthenticated: true,
+                        loginTime: Date.now()
+                    };
+                    
+                    // Store in sessionStorage for other pages
+                    sessionStorage.setItem('atmUserData', JSON.stringify(userData));
+                    
                     // Login successful
                     showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
                     
@@ -813,6 +825,73 @@
                 setLoadingState(false);
             }
         }
+        // async function loginUser(cardNumber, pin) {
+        //     try {
+        //         setLoadingState(true);
+                
+        //         // Remove spaces from card number for API
+        //         const cleanCardNumber = cardNumber.replace(/\s/g, '');
+                
+        //         console.log('🔍 Attempting login with:', {
+        //             url: `${API_BASE_URL}/login`,
+        //             cardNumber: cleanCardNumber
+        //         });
+
+        //         const response = await fetch(`${API_BASE_URL}/login`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Accept': 'application/json'
+        //                 // ❌ REMOVED: 'Authorization': `Basic ${credentials}`,
+        //             },
+        //             body: JSON.stringify({
+        //                 cardNumber: cleanCardNumber,
+        //                 pin: pin
+        //             })
+        //         });
+
+        //         console.log('📡 Response status:', response.status);
+
+        //         // Handle different HTTP status codes
+        //         if (response.status === 403) {
+        //             throw new Error('Access denied. Please check your API configuration.');
+        //         } else if (response.status === 401) {
+        //             throw new Error('Invalid card number or PIN.');
+        //         } else if (response.status === 404) {
+        //             throw new Error('API endpoint not found. Please check the server URL.');
+        //         } else if (response.status === 500) {
+        //             throw new Error('Server error. Please try again later.');
+        //         }
+
+        //         const data = await response.json();
+        //         console.log('📦 Response data:', data);
+
+        //         if (response.ok) {
+        //             // Login successful
+        //             showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
+                    
+        //             setTimeout(() => {
+        //                 window.location.href = 'DashBoard.html';
+        //             }, 2000);
+                    
+        //         } else {
+        //             // Login failed
+        //             const errorMessage = data.message || data.error || 'Login failed. Please try again.';
+        //             showMessage(`❌ ${errorMessage}`, 'error');
+        //         }
+                
+        //     } catch (error) {
+        //         console.error('❌ Login error:', error);
+                
+        //         if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        //             showMessage('🔴 Cannot connect to server. Please check if the API is running.', 'error');
+        //         } else {
+        //             showMessage(`🔴 ${error.message}`, 'error');
+        //         }
+        //     } finally {
+        //         setLoadingState(false);
+        //     }
+        // }
         // async function loginUser(cardNumber, pin) {
         //     try {
         //         setLoadingState(true);

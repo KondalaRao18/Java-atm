@@ -383,6 +383,16 @@
             transform: translateY(-2px);
         }
 
+        .form-input.error {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.2);
+        }
+
+        .form-input.success {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2);
+        }
+
         .form-input::placeholder {
             color: #a0906c;
             opacity: 0.7;
@@ -426,6 +436,17 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
+        }
+
+        .field-error {
+            color: #ff6b6b;
+            font-size: 0.8rem;
+            margin-top: 0.3rem;
+            display: none;
+        }
+
+        .field-error.show {
+            display: block;
         }
 
         /* Buttons */
@@ -661,7 +682,7 @@
             <div class="form-container">
                 <!-- Step 1: Personal Information -->
                 <div class="form-step active" id="personalInfoStep">
-                    <form id="personalInfoForm">
+                    <form id="personalInfoForm" novalidate>
                         <div class="form-row two-columns">
                             <div class="form-group">
                                 <label class="form-label" for="fullName">
@@ -674,7 +695,10 @@
                                     class="form-input"
                                     placeholder="Enter your full name"
                                     required
+                                    minlength="2"
+                                    maxlength="50"
                                 >
+                                <div class="field-error" id="fullNameError"></div>
                             </div>
                             
                             <div class="form-group">
@@ -688,6 +712,7 @@
                                     class="form-input"
                                     required
                                 >
+                                <div class="field-error" id="dobError"></div>
                             </div>
                         </div>
 
@@ -707,6 +732,7 @@
                                     <option value="Female">Female</option>
                                     <option value="Other">Other</option>
                                 </select>
+                                <div class="field-error" id="genderError"></div>
                             </div>
                             
                             <div class="form-group">
@@ -727,6 +753,7 @@
                                     <div class="security-dot"></div>
                                     <span>Used for secure notifications</span>
                                 </div>
+                                <div class="field-error" id="phoneError"></div>
                             </div>
                         </div>
 
@@ -746,6 +773,7 @@
                                 <div class="security-dot"></div>
                                 <span>Primary communication channel</span>
                             </div>
+                            <div class="field-error" id="emailError"></div>
                         </div>
 
                         <div class="form-group">
@@ -759,14 +787,17 @@
                                 placeholder="Enter your complete address"
                                 rows="3"
                                 required
+                                minlength="10"
+                                maxlength="200"
                             ></textarea>
+                            <div class="field-error" id="addressError"></div>
                         </div>
                     </form>
                 </div>
 
                 <!-- Step 2: Card Details -->
                 <div class="form-step" id="cardDetailsStep">
-                    <form id="cardDetailsForm">
+                    <form id="cardDetailsForm" novalidate>
                         <div class="form-group">
                             <label class="form-label" for="cardNumber">
                                 💳 Card Number
@@ -784,6 +815,7 @@
                                 <div class="security-dot"></div>
                                 <span>12-digit unique card identifier</span>
                             </div>
+                            <div class="field-error" id="cardNumberError"></div>
                         </div>
                         
                         <div class="form-row two-columns">
@@ -805,6 +837,7 @@
                                     <div class="security-dot"></div>
                                     <span>4-digit secure PIN</span>
                                 </div>
+                                <div class="field-error" id="pinError"></div>
                             </div>
                             
                             <div class="form-group">
@@ -821,6 +854,7 @@
                                     pattern="[0-9]{4}"
                                     required
                                 >
+                                <div class="field-error" id="confirmPinError"></div>
                             </div>
                         </div>
 
@@ -835,6 +869,7 @@
                                 class="form-input"
                                 placeholder="Enter initial deposit amount"
                                 min="100"
+                                max="1000000"
                                 step="0.01"
                                 required
                             >
@@ -842,13 +877,14 @@
                                 <div class="security-dot"></div>
                                 <span>Minimum ₹100 required</span>
                             </div>
+                            <div class="field-error" id="initialBalanceError"></div>
                         </div>
                     </form>
                 </div>
             </div>
             
             <div class="button-container">
-                <button class="action-btn btn-secondary" id="backBtn" onclick="goBack()">
+                <button class="action-btn btn-secondary" id="backBtn" onclick="goBack()" style="display: none;">
                     <span class="btn-icon">⬅️</span>
                     <span>Back</span>
                 </button>
@@ -868,574 +904,1583 @@
     </div>
 
     <script>
-        // API Configuration
-        // API Configuration
-            const API_BASE_URL = '/atm';
-            const API_USERNAME = 'your_username';
-            const API_PASSWORD = 'your_password';
+        // Configuration
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8080/atm';
+        let currentStep = 1;
+        let userData = {}; // This will store Step 1 data (userDetails)
+        let userId = null;
 
-            let currentStep = 1;
-            let userData = {};
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            createFloatingElements();
+            updateStepIndicator();
+            updateButtonStates();
+            setupInputValidation();
+            setupFormListeners();
+        });
 
-            // Create floating elements
-            function createFloatingElements() {
-                const container = document.getElementById('floatingElements');
-                const icons = ['🏦', '💳', '🔒', '💰', '⚡', '🌟', '💎', '🏆', '✨', '🔑', '💼', '👑'];
-                const count = 15;
-                
-                for (let i = 0; i < count; i++) {
-                    const element = document.createElement('div');
-                    element.className = 'float-icon';
-                    element.textContent = icons[Math.floor(Math.random() * icons.length)];
-                    element.style.left = Math.random() * 100 + '%';
-                    element.style.animationDelay = Math.random() * 25 + 's';
-                    element.style.animationDuration = (20 + Math.random() * 10) + 's';
-                    container.appendChild(element);
-                }
+        // Create floating elements
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const icons = ['🏦', '💳', '🔒', '💰', '⚡', '🌟', '💎', '🏆', '✨', '🎯', '💼', '📊'];
+        
+            function addFloatingIcon() {
+                const icon = document.createElement('div');
+                icon.className = 'float-icon';
+                icon.textContent = icons[Math.floor(Math.random() * icons.length)];
+                icon.style.left = Math.random() * 100 + '%';
+                icon.style.animationDelay = Math.random() * 5 + 's';
+                icon.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(icon);
+            
+                setTimeout(() => {
+                    if (icon.parentNode) {
+                        icon.parentNode.removeChild(icon);
+                    }
+                }, 25000);
             }
+        
+            for (let i = 0; i < 8; i++) {
+                setTimeout(() => addFloatingIcon(), i * 2000);
+            }
+        
+            setInterval(addFloatingIcon, 3000);
+        }
 
-            // Initialize page
-            document.addEventListener('DOMContentLoaded', function() {
-                createFloatingElements();
-                updateStepIndicator();
-                updateButtonStates();
-                
-                // Add input event listeners
-                setupInputValidation();
-                
-                // Format card number input
-                const cardNumberInput = document.getElementById('cardNumber');
-                if (cardNumberInput) {
-                    cardNumberInput.addEventListener('input', formatCardNumber);
+        // Setup input validation with real-time feedback
+        function setupInputValidation() {
+            // Full name validation
+            const fullNameInput = document.getElementById('fullName');
+            fullNameInput.addEventListener('input', function(e) {
+                validateField('fullName', e.target.value);
+            });
+            fullNameInput.addEventListener('blur', function(e) {
+                validateField('fullName', e.target.value);
+            });
+
+            // Date of birth validation
+            const dobInput = document.getElementById('dob');
+            dobInput.addEventListener('change', function(e) {
+                validateField('dob', e.target.value);
+            });
+
+            // Gender validation
+            const genderInput = document.getElementById('gender');
+            genderInput.addEventListener('change', function(e) {
+                validateField('gender', e.target.value);
+            });
+
+            // Phone number validation
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                validateField('phone', e.target.value);
+            });
+
+            // Email validation
+            const emailInput = document.getElementById('email');
+            emailInput.addEventListener('input', function(e) {
+                validateField('email', e.target.value);
+            });
+            emailInput.addEventListener('blur', function(e) {
+                validateField('email', e.target.value);
+            });
+
+            // Address validation
+            const addressInput = document.getElementById('address');
+            addressInput.addEventListener('input', function(e) {
+                validateField('address', e.target.value);
+            });
+
+            // Card number formatting and validation - updated for 12 digits
+            const cardInput = document.getElementById('cardNumber');
+            cardInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^0-9]/g, '');
+                // Format as XXXX XXXX XXXX for 12 digits
+                value = value.replace(/(.{4})/g, '$1 ').trim();
+                if (value.length > 14) { // 12 digits + 2 spaces = 14 characters max
+                    value = value.substring(0, 14);
                 }
-                
-                // Phone number validation
-                const phoneInput = document.getElementById('phone');
-                if (phoneInput) {
-                    phoneInput.addEventListener('input', validatePhoneNumber);
-                }
-                
-                // PIN confirmation validation
-                const confirmPinInput = document.getElementById('confirmPin');
-                if (confirmPinInput) {
-                    confirmPinInput.addEventListener('input', validatePinConfirmation);
-                }
-                
-                // Real-time PIN validation
-                const pinInput = document.getElementById('pin');
-                if (pinInput) {
-                    pinInput.addEventListener('input', validatePinConfirmation);
+                e.target.value = value;
+                validateField('cardNumber', value);
+            });
+
+            // PIN validation
+            const pinInput = document.getElementById('pin');
+            pinInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                validateField('pin', e.target.value);
+                if (document.getElementById('confirmPin').value) {
+                    validatePinMatch();
                 }
             });
 
-            // Setup input validation
-            function setupInputValidation() {
-                const inputs = document.querySelectorAll('.form-input');
-                inputs.forEach(input => {
-                    input.addEventListener('blur', validateField);
-                    input.addEventListener('focus', clearFieldError);
-                });
-            }
+            const confirmPinInput = document.getElementById('confirmPin');
+            confirmPinInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                validatePinMatch();
+            });
 
-            // Validate individual field
-            function validateField(event) {
-                const field = event.target;
-                const value = field.value.trim();
-                
-                // Remove existing error styling
-                field.classList.remove('error');
-                
-                // Basic validation based on field type
-                switch(field.name) {
-                    case 'fullName':
-                        if (value.length < 2) {
-                            showFieldError(field, 'Name must be at least 2 characters long');
-                            return false;
-                        }
-                        break;
-                        
-                    case 'phone':
-                        if (!/^\d{10}$/.test(value)) {
-                            showFieldError(field, 'Phone number must be 10 digits');
-                            return false;
-                        }
-                        break;
-                        
-                    case 'email':
-                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                            showFieldError(field, 'Please enter a valid email address');
-                            return false;
-                        }
-                        break;
-                        
-                    case 'cardNumber':
-                        if (!/^\d{4}\s\d{4}\s\d{4}$/.test(value)) {
-                            showFieldError(field, 'Card number must be 12 digits');
-                            return false;
-                        }
-                        break;
-                        
-                    case 'pin':
-                        if (!/^\d{4}$/.test(value)) {
-                            showFieldError(field, 'PIN must be 4 digits');
-                            return false;
-                        }
-                        break;
-                        
-                    case 'initialBalance':
-                        if (parseFloat(value) < 100) {
-                            showFieldError(field, 'Minimum balance is ₹100');
-                            return false;
-                        }
-                        break;
-                }
-                
-                return true;
-            }
+            // Initial balance validation
+            const balanceInput = document.getElementById('initialBalance');
+            balanceInput.addEventListener('input', function(e) {
+                validateField('initialBalance', e.target.value);
+            });
+        }
 
-            // Show field error
-            function showFieldError(field, message) {
-                field.classList.add('error');
-                field.style.borderColor = '#ff6b6b';
-                field.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-                
-                // Create or update error message
-                let errorElement = field.parentNode.querySelector('.field-error');
-                if (!errorElement) {
-                    errorElement = document.createElement('div');
-                    errorElement.className = 'field-error';
-                    errorElement.style.cssText = `
-                        color: #ff6b6b;
-                        font-size: 0.8rem;
-                        margin-top: 0.5rem;
-                        font-weight: 500;
-                    `;
-                    field.parentNode.appendChild(errorElement);
-                }
-                errorElement.textContent = message;
-            }
+        // Validate individual fields
+        function validateField(fieldName, value) {
+            const field = document.getElementById(fieldName);
+            const errorElement = document.getElementById(fieldName + 'Error');
+            let isValid = true;
+            let errorMessage = '';
 
-            // Clear field error
-            function clearFieldError(event) {
-                const field = event.target;
-                field.classList.remove('error');
-                field.style.borderColor = '';
-                field.style.backgroundColor = '';
-                
-                const errorElement = field.parentNode.querySelector('.field-error');
-                if (errorElement) {
-                    errorElement.remove();
-                }
-            }
-
-            // Format card number with spaces
-            function formatCardNumber(event) {
-                let value = event.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-                
-                if (formattedValue !== event.target.value) {
-                    event.target.value = formattedValue;
-                }
-            }
-
-            // Validate phone number (digits only)
-            function validatePhoneNumber(event) {
-                event.target.value = event.target.value.replace(/[^0-9]/g, '');
-            }
-
-            // Validate PIN confirmation
-            function validatePinConfirmation() {
-                const pin = document.getElementById('pin').value;
-                const confirmPin = document.getElementById('confirmPin').value;
-                const confirmField = document.getElementById('confirmPin');
-                
-                if (confirmPin && pin !== confirmPin) {
-                    showFieldError(confirmField, 'PINs do not match');
-                    return false;
-                } else if (confirmPin && pin === confirmPin) {
-                    clearFieldError({ target: confirmField });
-                    return true;
-                }
-                return true;
-            }
-
-            // Update step indicator
-            function updateStepIndicator() {
-                const steps = document.querySelectorAll('.step');
-                steps.forEach((step, index) => {
-                    const stepNumber = index + 1;
-                    step.classList.remove('active', 'completed', 'inactive');
-                    
-                    if (stepNumber < currentStep) {
-                        step.classList.add('completed');
-                    } else if (stepNumber === currentStep) {
-                        step.classList.add('active');
-                    } else {
-                        step.classList.add('inactive');
+            switch (fieldName) {
+                case 'fullName':
+                    if (!value.trim()) {
+                        errorMessage = 'Full name is required';
+                        isValid = false;
+                    } else if (value.trim().length < 2) {
+                        errorMessage = 'Name must be at least 2 characters';
+                        isValid = false;
+                    } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                        errorMessage = 'Name can only contain letters and spaces';
+                        isValid = false;
                     }
-                });
-            }
+                    break;
 
-            // Update button states
-            function updateButtonStates() {
-                const backBtn = document.getElementById('backBtn');
-                const nextBtn = document.getElementById('nextBtn');
-                const nextBtnText = document.getElementById('nextBtnText');
-                
-                // Back button visibility
-                if (currentStep === 1) {
-                    backBtn.style.display = 'none';
-                    nextBtn.style.flex = '1';
-                } else {
-                    backBtn.style.display = 'flex';
-                    nextBtn.style.flex = '1';
-                }
-                
-                // Next button text
-                if (currentStep === 2) {
-                    nextBtnText.textContent = 'Complete Registration';
-                    nextBtn.querySelector('.btn-icon').textContent = '✅';
-                } else {
-                    nextBtnText.textContent = 'Next Step';
-                    nextBtn.querySelector('.btn-icon').textContent = '➡️';
-                }
-            }
-
-            // Show/hide form steps
-            function showStep(stepNumber) {
-                const steps = document.querySelectorAll('.form-step');
-                steps.forEach((step, index) => {
-                    if (index + 1 === stepNumber) {
-                        step.classList.add('active');
-                    } else {
-                        step.classList.remove('active');
-                    }
-                });
-            }
-
-            // Validate current step
-            function validateCurrentStep() {
-                let isValid = true;
-                let currentForm;
-                
-                if (currentStep === 1) {
-                    currentForm = document.getElementById('personalInfoForm');
-                } else if (currentStep === 2) {
-                    currentForm = document.getElementById('cardDetailsForm');
-                }
-                
-                if (!currentForm) return false;
-                
-                const requiredFields = currentForm.querySelectorAll('[required]');
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        showFieldError(field, 'This field is required');
+                case 'dob':
+                    if (!value) {
+                        errorMessage = 'Date of birth is required';
                         isValid = false;
                     } else {
-                        // Validate the field content
-                        if (!validateField({ target: field })) {
+                        const birthDate = new Date(value);
+                        const today = new Date();
+                        const age = today.getFullYear() - birthDate.getFullYear();
+                        if (age < 18) {
+                            errorMessage = 'You must be at least 18 years old';
+                            isValid = false;
+                        } else if (age > 100) {
+                            errorMessage = 'Please enter a valid date of birth';
                             isValid = false;
                         }
                     }
-                });
-                
-                // Additional validation for step 2
-                if (currentStep === 2) {
-                    if (!validatePinConfirmation()) {
+                    break;
+
+                case 'gender':
+                    if (!value) {
+                        errorMessage = 'Gender selection is required';
                         isValid = false;
                     }
-                }
-                
-                return isValid;
+                    break;
+
+                case 'phone':
+                    if (!value) {
+                        errorMessage = 'Phone number is required';
+                        isValid = false;
+                    } else if (!/^[0-9]{10}$/.test(value)) {
+                        errorMessage = 'Phone number must be exactly 10 digits';
+                        isValid = false;
+                    }
+                    break;
+
+                case 'email':
+                    if (!value) {
+                        errorMessage = 'Email is required';
+                        isValid = false;
+                    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                        errorMessage = 'Please enter a valid email address';
+                        isValid = false;
+                    }
+                    break;
+
+                case 'address':
+                    if (!value.trim()) {
+                        errorMessage = 'Address is required';
+                        isValid = false;
+                    } else if (value.trim().length < 10) {
+                        errorMessage = 'Address must be at least 10 characters';
+                        isValid = false;
+                    }
+                    break;
+
+                case 'cardNumber':
+                    const cleanCard = value.replace(/\s/g, '');
+                    if (!cleanCard) {
+                        errorMessage = 'Card number is required';
+                        isValid = false;
+                    } else if (cleanCard.length !== 12) {  // Changed from 16 to 12
+                        errorMessage = 'Card number must be exactly 12 digits';
+                        isValid = false;
+                    } else if (!/^[0-9]+$/.test(cleanCard)) {
+                        errorMessage = 'Card number can only contain digits';
+                        isValid = false;
+                    }
+                    break;
+
+                case 'pin':
+                    if (!value) {
+                        errorMessage = 'PIN is required';
+                        isValid = false;
+                    } else if (value.length !== 4) {
+                        errorMessage = 'PIN must be exactly 4 digits';
+                        isValid = false;
+                    }
+                    break;
+
+                case 'initialBalance':
+                    const balance = parseFloat(value);
+                    if (!value) {
+                        errorMessage = 'Initial balance is required';
+                        isValid = false;
+                    } else if (isNaN(balance)) {
+                        errorMessage = 'Please enter a valid amount';
+                        isValid = false;
+                    } else if (balance < 100) {
+                        errorMessage = 'Minimum balance is ₹100';
+                        isValid = false;
+                    } else if (balance > 1000000) {
+                        errorMessage = 'Maximum balance is ₹10,00,000';
+                        isValid = false;
+                    }
+                    break;
             }
 
-            // Collect form data
-            function collectFormData() {
-                const forms = document.querySelectorAll('form');
-                const formData = {};
-                
-                forms.forEach(form => {
-                    const inputs = form.querySelectorAll('.form-input');
-                    inputs.forEach(input => {
-                        if (input.name && input.value.trim()) {
-                            formData[input.name] = input.value.trim();
-                        }
-                    });
-                });
-                
-                return formData;
+            // Update field appearance
+            field.classList.remove('error', 'success');
+            if (value) {
+                field.classList.add(isValid ? 'success' : 'error');
             }
 
-            // Show message
-            function showMessage(message, type = 'error') {
-                const messageElement = document.getElementById(type === 'error' ? 'errorMessage' : 'successMessage');
-                const otherMessageElement = document.getElementById(type === 'error' ? 'successMessage' : 'errorMessage');
-                
-                // Hide other message
-                otherMessageElement.classList.remove('show');
-                otherMessageElement.textContent = '';
-                
-                // Show current message
-                messageElement.textContent = message;
-                messageElement.classList.add('show');
-                
-                // Auto-hide after 5 seconds
-                setTimeout(() => {
-                    messageElement.classList.remove('show');
-                }, 5000);
-            }
-
-            // Hide all messages
-            function hideMessages() {
-                document.getElementById('errorMessage').classList.remove('show');
-                document.getElementById('successMessage').classList.remove('show');
-            }
-
-            // Show loading state
-            function showLoading(show = true) {
-                const nextBtn = document.getElementById('nextBtn');
-                const loadingSpinner = document.getElementById('loadingSpinner');
-                const nextBtnText = document.getElementById('nextBtnText');
-                
-                if (show) {
-                    nextBtn.disabled = true;
-                    loadingSpinner.style.display = 'block';
-                    nextBtnText.style.opacity = '0.6';
+            // Show/hide error message
+            if (errorElement) {
+                if (errorMessage) {
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.add('show');
                 } else {
-                    nextBtn.disabled = false;
-                    loadingSpinner.style.display = 'none';
-                    nextBtnText.style.opacity = '1';
+                    errorElement.classList.remove('show');
                 }
             }
 
-            // Generate random card number
-            function generateCardNumber() {
-                let cardNumber = '';
-                for (let i = 0; i < 16; i++) {
-                    cardNumber += Math.floor(Math.random() * 10);
-                }
-                return cardNumber.replace(/(.{4})/g, '$1 ').trim();
-            }
+            return isValid;
+        }
 
-            // API call with authentication
-            async function makeApiCall(endpoint, method = 'POST', data = null) {
-                const credentials = btoa(`${API_USERNAME}:${API_PASSWORD}`);
-                
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Basic ${credentials}`
-                    }
-                };
-                
-                if (data) {
-                    options.body = JSON.stringify(data);
-                }
-                
-                try {
-                    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('API call failed:', error);
-                    throw error;
-                }
-            }
+        // Validate PIN match
+        function validatePinMatch() {
+            const pin = document.getElementById('pin').value;
+            const confirmPin = document.getElementById('confirmPin').value;
+            const confirmPinField = document.getElementById('confirmPin');
+            const errorElement = document.getElementById('confirmPinError');
 
-            // Submit registration
-            async function submitRegistration(formData) {
-                try {
-                    showLoading(true);
-                    
-                    // Prepare data for API
-                    const registrationData = {
-                        fullName: formData.fullName,
-                        dateOfBirth: formData.dob,
-                        gender: formData.gender,
-                        phoneNumber: formData.phone,
-                        email: formData.email,
-                        address: formData.address,
-                        cardNumber: formData.cardNumber.replace(/\s/g, ''),
-                        pin: formData.pin,
-                        initialBalance: parseFloat(formData.initialBalance)
-                    };
-                    
-                    // Make API call
-                    const response = await makeApiCall('/register', 'POST', registrationData);
-                    
-                    if (response.success) {
-                        showMessage('Registration completed successfully! You can now use your ATM card.', 'success');
-                        
-                        // Store user data for potential future use
-                        userData = { ...registrationData, accountId: response.accountId };
-                        
-                        // Redirect to login page after 3 seconds
-                        setTimeout(() => {
-                            window.location.href = '/login.html';
-                        }, 3000);
-                        
-                    } else {
-                        throw new Error(response.message || 'Registration failed');
-                    }
-                    
-                } catch (error) {
-                    console.error('Registration error:', error);
-                    
-                    // Show appropriate error message
-                    if (error.message.includes('card number already exists')) {
-                        showMessage('This card number is already registered. Please use a different card number.', 'error');
-                    } else if (error.message.includes('email already exists')) {
-                        showMessage('This email address is already registered. Please use a different email.', 'error');
-                    } else {
-                        showMessage('Registration failed. Please check your information and try again.', 'error');
-                    }
-                } finally {
-                    showLoading(false);
-                }
+            if (confirmPin && pin !== confirmPin) {
+                confirmPinField.classList.add('error');
+                errorElement.textContent = 'PINs do not match';
+                errorElement.classList.add('show');
+                return false;
+            } else if (confirmPin) {
+                confirmPinField.classList.remove('error');
+                confirmPinField.classList.add('success');
+                errorElement.classList.remove('show');
+                return true;
             }
+            return false;
+        }
 
-            // Next step function
-            async function nextStep() {
-                hideMessages();
-                
-                // Validate current step
-                if (!validateCurrentStep()) {
-                    showMessage('Please fill in all required fields correctly.', 'error');
-                    return;
+        // Setup form listeners
+        function setupFormListeners() {
+            const personalForm = document.getElementById('personalInfoForm');
+            personalForm.addEventListener('input', updateButtonStates);
+            personalForm.addEventListener('change', updateButtonStates);
+
+            const cardForm = document.getElementById('cardDetailsForm');
+            cardForm.addEventListener('input', updateButtonStates);
+            cardForm.addEventListener('change', updateButtonStates);
+
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    nextStep();
                 }
-                
+            });
+        }
+
+        // Update step indicator
+        function updateStepIndicator() {
+            const steps = document.querySelectorAll('.step');
+            steps.forEach((step, index) => {
+                step.classList.remove('active', 'completed', 'inactive');
+            
+                if (index + 1 < currentStep) {
+                    step.classList.add('completed');
+                } else if (index + 1 === currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.add('inactive');
+                }
+            });
+        }
+
+        // Update button states
+        function updateButtonStates() {
+            const backBtn = document.getElementById('backBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const nextBtnText = document.getElementById('nextBtnText');
+        
+            backBtn.style.display = currentStep === 1 ? 'none' : 'flex';
+        
+            if (currentStep === 1) {
+                nextBtnText.textContent = 'Next Step';
+            } else if (currentStep === 2) {
+                nextBtnText.textContent = 'Create Account';
+            }
+        
+            nextBtn.disabled = !isCurrentStepValid();
+        }
+
+        // Check if current step is valid
+        function isCurrentStepValid() {
+            if (currentStep === 1) {
+                const fullName = document.getElementById('fullName').value;
+                const dob = document.getElementById('dob').value;
+                const gender = document.getElementById('gender').value;
+                const phone = document.getElementById('phone').value;
+                const email = document.getElementById('email').value;
+                const address = document.getElementById('address').value;
+
+                return validateField('fullName', fullName) &&
+                    validateField('dob', dob) &&
+                    validateField('gender', gender) &&
+                    validateField('phone', phone) &&
+                    validateField('email', email) &&
+                    validateField('address', address);
+            } else if (currentStep === 2) {
+                const cardNumber = document.getElementById('cardNumber').value;
+                const pin = document.getElementById('pin').value;
+                const confirmPin = document.getElementById('confirmPin').value;
+                const initialBalance = document.getElementById('initialBalance').value;
+
+                return validateField('cardNumber', cardNumber) &&
+                    validateField('pin', pin) &&
+                    validatePinMatch() &&
+                    validateField('initialBalance', initialBalance);
+            }
+            return false;
+        }
+
+        // Next step function - CORRECTED LOGIC
+        async function nextStep() {
+            if (!isCurrentStepValid()) {
+                showError('Please fill in all required fields correctly');
+                return;
+            }
+        
+            const nextBtn = document.getElementById('nextBtn');
+            const nextBtnText = document.getElementById('nextBtnText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+        
+            nextBtn.disabled = true;
+            nextBtnText.style.display = 'none';
+            loadingSpinner.style.display = 'block';
+        
+            try {
                 if (currentStep === 1) {
-                    // Move to step 2
+                    // STEP 1: Collect and store user details data
+                    console.log('=== STEP 1: Collecting User Details ===');
+                    
+                    const personalForm = document.getElementById('personalInfoForm');
+                    const formData = new FormData(personalForm);
+                
+                    // Store userData for later use in step 2
+                    userData = {
+                        fullName: formData.get('fullName').trim(),
+                        dob: formData.get('dob'),
+                        gender: formData.get('gender'),
+                        phone: formData.get('phone'),
+                        email: formData.get('email').trim().toLowerCase(),
+                        address: formData.get('address').trim()
+                    };
+                
+                    console.log('User details collected and stored:', userData);
+                
+                    // Just move to next step, don't send to backend yet
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                
                     currentStep = 2;
                     showStep(currentStep);
-                    updateStepIndicator();
-                    updateButtonStates();
+                
+                } else if (currentStep === 2) {
+                    // STEP 2: Collect card details and combine with user details
+                    console.log('=== STEP 2: Collecting Card Details and Submitting ===');
                     
-                    // Auto-generate card number if empty
-                    const cardNumberField = document.getElementById('cardNumber');
-                    if (!cardNumberField.value.trim()) {
-                        cardNumberField.value = generateCardNumber();
+                    const cardForm = document.getElementById('cardDetailsForm');
+                    const formData = new FormData(cardForm);
+                
+                    const cardData = {
+                        cardNumber: formData.get('cardNumber').replace(/\s/g, ''),
+                        pin: formData.get('pin'),
+                        initialBalance: parseFloat(formData.get('initialBalance'))
+                    };
+                
+                    console.log('Card details collected:', {
+                        cardNumber: cardData.cardNumber,
+                        pin: '****',
+                        initialBalance: cardData.initialBalance
+                    });
+                    
+                    console.log('User details from step 1:', userData);
+                
+                    // Combine both datasets and send to backend
+                    await createCompleteAccount(userData, cardData);
+                }
+            
+            } catch (error) {
+                console.error('Error:', error);
+                showError('An error occurred. Please try again.');
+            } finally {
+                nextBtn.disabled = false;
+                nextBtnText.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+                updateButtonStates();
+            }
+        }
+
+        // Go back function
+        function goBack() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        // Show specific step
+        function showStep(step) {
+            const steps = document.querySelectorAll('.form-step');
+            steps.forEach(stepElement => {
+                stepElement.classList.remove('active');
+            });
+        
+            if (step === 1) {
+                document.getElementById('personalInfoStep').classList.add('active');
+            } else if (step === 2) {
+                document.getElementById('cardDetailsStep').classList.add('active');
+            }
+        
+            updateStepIndicator();
+            updateButtonStates();
+            hideMessages();
+        }
+
+        // Create complete account - CORRECTED TO SEND PROPER DATA STRUCTURE
+        async function createCompleteAccount(userDetails, cardDetails) {
+            try {
+                console.log('=== CREATING COMPLETE ACCOUNT ===');
+                
+                // Create the payload structure that matches your backend DTO
+                const completeAccountData = {
+                    cardNumber: cardDetails.cardNumber,
+                    pin: cardDetails.pin,
+                    balance: cardDetails.initialBalance,
+                    userDetails: {
+                        fullName: userDetails.fullName,
+                        dob: userDetails.dob,
+                        gender: userDetails.gender,
+                        email: userDetails.email,
+                        phone: userDetails.phone,
+                        address: userDetails.address
+                    }
+                };
+
+                console.log('=== PAYLOAD BEING SENT TO BACKEND ===');
+                console.log('Complete payload:', JSON.stringify(completeAccountData, null, 2));
+                console.log('userDetails in payload:', completeAccountData.userDetails);
+                console.log('Is userDetails null?', completeAccountData.userDetails === null);
+                console.log('Is userDetails undefined?', completeAccountData.userDetails === undefined);
+
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(completeAccountData)
+                });
+
+                console.log('Backend response status:', response.status);
+
+                const responseText = await response.text();
+                console.log('Backend response text:', responseText);
+
+                if (response.status === 403) {
+                    throw new Error(`Access forbidden (403). Server configuration issue. Please contact support.`);
+                }
+
+                if (!response.ok) {
+                    let errorMessage = 'Unknown error';
+                    try {
+                        const errorJson = JSON.parse(responseText);
+                        errorMessage = errorJson.error || errorJson.message || responseText;
+                    } catch (e) {
+                        errorMessage = responseText || `HTTP ${response.status}`;
                     }
                     
-                } else if (currentStep === 2) {
-                    // Complete registration
-                    const formData = collectFormData();
-                    await submitRegistration(formData);
+                    throw new Error(`Account creation failed: ${response.status} - ${errorMessage}`);
                 }
-            }
 
-            // Go back function
-            function goBack() {
-                if (currentStep > 1) {
-                    hideMessages();
-                    currentStep--;
-                    showStep(currentStep);
-                    updateStepIndicator();
-                    updateButtonStates();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    result = { success: true, response: responseText };
                 }
-            }
+                
+                console.log('Account created successfully:', result);
 
-            // Auto-generate card number button (optional enhancement)
-            function generateNewCardNumber() {
-                const cardNumberField = document.getElementById('cardNumber');
-                cardNumberField.value = generateCardNumber();
-                cardNumberField.focus();
-            }
+                showSuccess(`Account created successfully! Card: ${cardDetails.cardNumber.replace(/(.{4})/g, '$1 ').trim()}. Your balance is securely encrypted. Redirecting to login...`);
 
-            // Add keyboard navigation
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    nextStep();
-                } else if (event.key === 'Escape') {
-                    hideMessages();
+                clearSensitiveData();
+
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
+
+            } catch (error) {
+                console.error('Account creation error:', error);
+
+                if (error.message.includes('403') || error.message.includes('forbidden')) {
+                    showError(`Access Forbidden: Server configuration issue. Please contact support.`);
+                } else if (error.message.includes('fetch') || error.name === 'TypeError') {
+                    showError('Unable to connect to server. Please check your connection and try again.');
+                } else {
+                    showError(error.message || 'Registration failed. Please try again.');
                 }
-            });
 
-            // Add form submission prevention
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    nextStep();
+                clearSensitiveData();
+            }
+        }
+
+        // Clear sensitive data from memory (security best practice)
+        function clearSensitiveData() {
+            try {
+                document.getElementById('pin').value = '';
+                document.getElementById('confirmPin').value = '';
+                document.getElementById('cardNumber').value = '';
+            } catch (e) {
+                console.log('Error clearing form data:', e);
+            }
+            
+            userData = {};
+            console.log('Sensitive data cleared from memory');
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.classList.add('show');
+            }, 10);
+        
+            setTimeout(() => {
+                hideMessages();
+            }, 10000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.classList.add('show');
+            }, 10);
+        }
+
+        // Hide messages
+        function hideMessages() {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+        
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+        
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }, 300);
+        }
+
+        // Add interactive enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.form-input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+            
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
                 });
             });
+        
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                });
+            });
+        
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    document.body.classList.add('keyboard-navigation');
+                }
+            });
+        
+            document.addEventListener('mousedown', function() {
+                document.body.classList.remove('keyboard-navigation');
+            });
+        });
+        // const API_BASE_URL = 'http://localhost:8080/atm';
+        // let currentStep = 1;
+        // let userData = {};
+        // let userId = null;
 
-            // Utility function to check if user is returning
-            function isReturningUser() {
-                return localStorage.getItem('atmUserData') !== null;
+        // // Initialize page
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     createFloatingElements();
+        //     updateStepIndicator();
+        //     updateButtonStates();
+        //     setupInputValidation();
+        //     setupFormListeners();
+        // });
+
+        // // Create floating elements
+        // function createFloatingElements() {
+        //     const container = document.getElementById('floatingElements');
+        //     const icons = ['🏦', '💳', '🔒', '💰', '⚡', '🌟', '💎', '🏆', '✨', '🎯', '💼', '📊'];
+           
+        //     function addFloatingIcon() {
+        //         const icon = document.createElement('div');
+        //         icon.className = 'float-icon';
+        //         icon.textContent = icons[Math.floor(Math.random() * icons.length)];
+        //         icon.style.left = Math.random() * 100 + '%';
+        //         icon.style.animationDelay = Math.random() * 5 + 's';
+        //         icon.style.animationDuration = (15 + Math.random() * 10) + 's';
+        //         container.appendChild(icon);
+               
+        //         setTimeout(() => {
+        //             if (icon.parentNode) {
+        //                 icon.parentNode.removeChild(icon);
+        //             }
+        //         }, 25000);
+        //     }
+           
+        //     for (let i = 0; i < 8; i++) {
+        //         setTimeout(() => addFloatingIcon(), i * 2000);
+        //     }
+           
+        //     setInterval(addFloatingIcon, 3000);
+        // }
+
+        // // Setup input validation with real-time feedback
+        // function setupInputValidation() {
+        //     // Full name validation
+        //     const fullNameInput = document.getElementById('fullName');
+        //     fullNameInput.addEventListener('input', function(e) {
+        //         validateField('fullName', e.target.value);
+        //     });
+        //     fullNameInput.addEventListener('blur', function(e) {
+        //         validateField('fullName', e.target.value);
+        //     });
+
+        //     // Date of birth validation
+        //     const dobInput = document.getElementById('dob');
+        //     dobInput.addEventListener('change', function(e) {
+        //         validateField('dob', e.target.value);
+        //     });
+
+        //     // Gender validation
+        //     const genderInput = document.getElementById('gender');
+        //     genderInput.addEventListener('change', function(e) {
+        //         validateField('gender', e.target.value);
+        //     });
+
+        //     // Phone number validation
+        //     const phoneInput = document.getElementById('phone');
+        //     phoneInput.addEventListener('input', function(e) {
+        //         e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        //         validateField('phone', e.target.value);
+        //     });
+
+        //     // Email validation
+        //     const emailInput = document.getElementById('email');
+        //     emailInput.addEventListener('input', function(e) {
+        //         validateField('email', e.target.value);
+        //     });
+        //     emailInput.addEventListener('blur', function(e) {
+        //         validateField('email', e.target.value);
+        //     });
+
+        //     // Address validation
+        //     const addressInput = document.getElementById('address');
+        //     addressInput.addEventListener('input', function(e) {
+        //         validateField('address', e.target.value);
+        //     });
+
+        //     // Card number formatting and validation - updated for 12 digits
+        //     const cardInput = document.getElementById('cardNumber');
+        //     cardInput.addEventListener('input', function(e) {
+        //         let value = e.target.value.replace(/[^0-9]/g, '');
+        //         // Format as XXXX XXXX XXXX for 12 digits
+        //         value = value.replace(/(.{4})/g, '$1 ').trim();
+        //         if (value.length > 14) { // 12 digits + 2 spaces = 14 characters max
+        //             value = value.substring(0, 14);
+        //         }
+        //         e.target.value = value;
+        //         validateField('cardNumber', value);
+        //     });
+
+        //     // PIN validation
+        //     const pinInput = document.getElementById('pin');
+        //     pinInput.addEventListener('input', function(e) {
+        //         e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        //         validateField('pin', e.target.value);
+        //         if (document.getElementById('confirmPin').value) {
+        //             validatePinMatch();
+        //         }
+        //     });
+
+        //     const confirmPinInput = document.getElementById('confirmPin');
+        //     confirmPinInput.addEventListener('input', function(e) {
+        //         e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        //         validatePinMatch();
+        //     });
+
+        //     // Initial balance validation
+        //     const balanceInput = document.getElementById('initialBalance');
+        //     balanceInput.addEventListener('input', function(e) {
+        //         validateField('initialBalance', e.target.value);
+        //     });
+        // }
+
+        // // Validate individual fields
+        // function validateField(fieldName, value) {
+        //     const field = document.getElementById(fieldName);
+        //     const errorElement = document.getElementById(fieldName + 'Error');
+        //     let isValid = true;
+        //     let errorMessage = '';
+
+        //     switch (fieldName) {
+        //         case 'fullName':
+        //             if (!value.trim()) {
+        //                 errorMessage = 'Full name is required';
+        //                 isValid = false;
+        //             } else if (value.trim().length < 2) {
+        //                 errorMessage = 'Name must be at least 2 characters';
+        //                 isValid = false;
+        //             } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+        //                 errorMessage = 'Name can only contain letters and spaces';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'dob':
+        //             if (!value) {
+        //                 errorMessage = 'Date of birth is required';
+        //                 isValid = false;
+        //             } else {
+        //                 const birthDate = new Date(value);
+        //                 const today = new Date();
+        //                 const age = today.getFullYear() - birthDate.getFullYear();
+        //                 if (age < 18) {
+        //                     errorMessage = 'You must be at least 18 years old';
+        //                     isValid = false;
+        //                 } else if (age > 100) {
+        //                     errorMessage = 'Please enter a valid date of birth';
+        //                     isValid = false;
+        //                 }
+        //             }
+        //             break;
+
+        //         case 'gender':
+        //             if (!value) {
+        //                 errorMessage = 'Gender selection is required';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'phone':
+        //             if (!value) {
+        //                 errorMessage = 'Phone number is required';
+        //                 isValid = false;
+        //             } else if (!/^[0-9]{10}$/.test(value)) {
+        //                 errorMessage = 'Phone number must be exactly 10 digits';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'email':
+        //             if (!value) {
+        //                 errorMessage = 'Email is required';
+        //                 isValid = false;
+        //             } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        //                 errorMessage = 'Please enter a valid email address';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'address':
+        //             if (!value.trim()) {
+        //                 errorMessage = 'Address is required';
+        //                 isValid = false;
+        //             } else if (value.trim().length < 10) {
+        //                 errorMessage = 'Address must be at least 10 characters';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'cardNumber':
+        //             const cleanCard = value.replace(/\s/g, '');
+        //             if (!cleanCard) {
+        //                 errorMessage = 'Card number is required';
+        //                 isValid = false;
+        //             } else if (cleanCard.length !== 12) {  // Changed from 16 to 12
+        //                 errorMessage = 'Card number must be exactly 12 digits';
+        //                 isValid = false;
+        //             } else if (!/^[0-9]+$/.test(cleanCard)) {
+        //                 errorMessage = 'Card number can only contain digits';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'pin':
+        //             if (!value) {
+        //                 errorMessage = 'PIN is required';
+        //                 isValid = false;
+        //             } else if (value.length !== 4) {
+        //                 errorMessage = 'PIN must be exactly 4 digits';
+        //                 isValid = false;
+        //             }
+        //             break;
+
+        //         case 'initialBalance':
+        //             const balance = parseFloat(value);
+        //             if (!value) {
+        //                 errorMessage = 'Initial balance is required';
+        //                 isValid = false;
+        //             } else if (isNaN(balance)) {
+        //                 errorMessage = 'Please enter a valid amount';
+        //                 isValid = false;
+        //             } else if (balance < 100) {
+        //                 errorMessage = 'Minimum balance is ₹100';
+        //                 isValid = false;
+        //             } else if (balance > 1000000) {
+        //                 errorMessage = 'Maximum balance is ₹10,00,000';
+        //                 isValid = false;
+        //             }
+        //             break;
+        //     }
+
+        //     // Update field appearance
+        //     field.classList.remove('error', 'success');
+        //     if (value) {
+        //         field.classList.add(isValid ? 'success' : 'error');
+        //     }
+
+        //     // Show/hide error message
+        //     if (errorElement) {
+        //         if (errorMessage) {
+        //             errorElement.textContent = errorMessage;
+        //             errorElement.classList.add('show');
+        //         } else {
+        //             errorElement.classList.remove('show');
+        //         }
+        //     }
+
+        //     return isValid;
+        // }
+
+        // // Validate PIN match
+        // function validatePinMatch() {
+        //     const pin = document.getElementById('pin').value;
+        //     const confirmPin = document.getElementById('confirmPin').value;
+        //     const confirmPinField = document.getElementById('confirmPin');
+        //     const errorElement = document.getElementById('confirmPinError');
+
+        //     if (confirmPin && pin !== confirmPin) {
+        //         confirmPinField.classList.add('error');
+        //         errorElement.textContent = 'PINs do not match';
+        //         errorElement.classList.add('show');
+        //         return false;
+        //     } else if (confirmPin) {
+        //         confirmPinField.classList.remove('error');
+        //         confirmPinField.classList.add('success');
+        //         errorElement.classList.remove('show');
+        //         return true;
+        //     }
+        //     return false;
+        // }
+
+        // // Setup form listeners
+        // function setupFormListeners() {
+        //     const personalForm = document.getElementById('personalInfoForm');
+        //     personalForm.addEventListener('input', updateButtonStates);
+        //     personalForm.addEventListener('change', updateButtonStates);
+
+        //     const cardForm = document.getElementById('cardDetailsForm');
+        //     cardForm.addEventListener('input', updateButtonStates);
+        //     cardForm.addEventListener('change', updateButtonStates);
+
+        //     document.addEventListener('keypress', function(e) {
+        //         if (e.key === 'Enter') {
+        //             e.preventDefault();
+        //             nextStep();
+        //         }
+        //     });
+        // }
+
+        // // Update step indicator
+        // function updateStepIndicator() {
+        //     const steps = document.querySelectorAll('.step');
+        //     steps.forEach((step, index) => {
+        //         step.classList.remove('active', 'completed', 'inactive');
+               
+        //         if (index + 1 < currentStep) {
+        //             step.classList.add('completed');
+        //         } else if (index + 1 === currentStep) {
+        //             step.classList.add('active');
+        //         } else {
+        //             step.classList.add('inactive');
+        //         }
+        //     });
+        // }
+
+        // // Update button states
+        // function updateButtonStates() {
+        //     const backBtn = document.getElementById('backBtn');
+        //     const nextBtn = document.getElementById('nextBtn');
+        //     const nextBtnText = document.getElementById('nextBtnText');
+           
+        //     backBtn.style.display = currentStep === 1 ? 'none' : 'flex';
+           
+        //     if (currentStep === 1) {
+        //         nextBtnText.textContent = 'Next Step';
+        //     } else if (currentStep === 2) {
+        //         nextBtnText.textContent = 'Create Account';
+        //     }
+           
+        //     nextBtn.disabled = !isCurrentStepValid();
+        // }
+
+        // // Check if current step is valid
+        // function isCurrentStepValid() {
+        //     if (currentStep === 1) {
+        //         const fullName = document.getElementById('fullName').value;
+        //         const dob = document.getElementById('dob').value;
+        //         const gender = document.getElementById('gender').value;
+        //         const phone = document.getElementById('phone').value;
+        //         const email = document.getElementById('email').value;
+        //         const address = document.getElementById('address').value;
+
+        //         return validateField('fullName', fullName) &&
+        //                validateField('dob', dob) &&
+        //                validateField('gender', gender) &&
+        //                validateField('phone', phone) &&
+        //                validateField('email', email) &&
+        //                validateField('address', address);
+        //     } else if (currentStep === 2) {
+        //         const cardNumber = document.getElementById('cardNumber').value;
+        //         const pin = document.getElementById('pin').value;
+        //         const confirmPin = document.getElementById('confirmPin').value;
+        //         const initialBalance = document.getElementById('initialBalance').value;
+
+        //         return validateField('cardNumber', cardNumber) &&
+        //                validateField('pin', pin) &&
+        //                validatePinMatch() &&
+        //                validateField('initialBalance', initialBalance);
+        //     }
+        //     return false;
+        // }
+
+        // // Next step function
+        // async function nextStep() {
+        //     if (!isCurrentStepValid()) {
+        //         showError('Please fill in all required fields correctly');
+        //         return;
+        //     }
+           
+        //     const nextBtn = document.getElementById('nextBtn');
+        //     const nextBtnText = document.getElementById('nextBtnText');
+        //     const loadingSpinner = document.getElementById('loadingSpinner');
+           
+        //     nextBtn.disabled = true;
+        //     nextBtnText.style.display = 'none';
+        //     loadingSpinner.style.display = 'block';
+           
+        //     try {
+        //         if (currentStep === 1) {
+        //             const personalForm = document.getElementById('personalInfoForm');
+        //             const formData = new FormData(personalForm);
+                   
+        //             userData = {
+        //                 fullName: formData.get('fullName').trim(),
+        //                 dob: formData.get('dob'),
+        //                 gender: formData.get('gender'),
+        //                 phone: formData.get('phone'),
+        //                 email: formData.get('email').trim().toLowerCase(),
+        //                 address: formData.get('address').trim()
+        //             };
+                   
+        //             await new Promise(resolve => setTimeout(resolve, 500));
+                   
+        //             currentStep = 2;
+        //             showStep(currentStep);
+                   
+        //         } else if (currentStep === 2) {
+        //             const cardForm = document.getElementById('cardDetailsForm');
+        //             const formData = new FormData(cardForm);
+                   
+        //             const cardData = {
+        //                 cardNumber: formData.get('cardNumber').replace(/\s/g, ''), // Remove all spaces
+        //                 pin: formData.get('pin'),
+        //                 initialBalance: parseFloat(formData.get('initialBalance'))
+        //             };
+                   
+        //             console.log('Card data prepared:', {
+        //                 cardNumber: cardData.cardNumber,
+        //                 pin: '****',
+        //                 initialBalance: cardData.initialBalance
+        //             });
+                   
+        //             // Create account using both APIs
+        //             await createAccount(userData, cardData);
+        //         }
+               
+        //     } catch (error) {
+        //         console.error('Error:', error);
+        //         showError('An error occurred. Please try again.');
+        //     } finally {
+        //         nextBtn.disabled = false;
+        //         nextBtnText.style.display = 'block';
+        //         loadingSpinner.style.display = 'none';
+        //         updateButtonStates();
+        //     }
+        // }
+
+        // // Go back function
+        // function goBack() {
+        //     if (currentStep > 1) {
+        //         currentStep--;
+        //         showStep(currentStep);
+        //     }
+        // }
+
+        // // Show specific step
+        // function showStep(step) {
+        //     const steps = document.querySelectorAll('.form-step');
+        //     steps.forEach(stepElement => {
+        //         stepElement.classList.remove('active');
+        //     });
+           
+        //     if (step === 1) {
+        //         document.getElementById('personalInfoStep').classList.add('active');
+        //     } else if (step === 2) {
+        //         document.getElementById('cardDetailsStep').classList.add('active');
+        //     }
+           
+        //     updateStepIndicator();
+        //     updateButtonStates();
+        //     hideMessages();
+        // }
+
+        // // Create account function using your backend APIs with proper field mapping
+        // // Replace the createAccount function with this enhanced debugging version
+        // async function createAccount(personalData, cardData) {
+        //     try {
+        //         console.log('Starting account creation process...');
+                
+        //         // Step 1: Create user profile using POST /atm/add
+        //         const userProfileData = {
+        //             fullName: personalData.fullName,
+        //             dob: personalData.dob,
+        //             gender: personalData.gender,
+        //             email: personalData.email,
+        //             phone: personalData.phone,
+        //             address: personalData.address
+        //         };
+
+        //         console.log('Creating user profile with data:', userProfileData);
+
+        //         const userResponse = await fetch(`${API_BASE_URL}/add`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Accept': 'application/json'
+        //             },
+        //             body: JSON.stringify(userProfileData)
+        //         });
+
+        //         console.log('User creation response status:', userResponse.status);
+
+        //         const userResponseText = await userResponse.text();
+        //         console.log('User creation raw response:', userResponseText);
+
+        //         if (!userResponse.ok) {
+        //             throw new Error(`Failed to create user profile: ${userResponse.status} - ${userResponseText}`);
+        //         }
+
+        //         let userResult;
+        //         try {
+        //             userResult = JSON.parse(userResponseText);
+        //         } catch (e) {
+        //             userResult = { success: true, response: userResponseText };
+        //         }
+                
+        //         console.log('User created successfully. Full response:', userResult);
+                
+        //         // Extract user ID
+        //         userId = userResult.id || userResult.userId || userResult.user?.id || userResult.data?.id || 7; // Use 7 as fallback since you know it was created
+                
+        //         console.log('Using userId:', userId);
+
+        //         // Step 2: Register card using POST /atm/register with extensive debugging
+        //         const cardRegistrationData = {
+        //             cardNumber: cardData.cardNumber,
+        //             pin: cardData.pin,
+        //             balance: parseFloat(cardData.initialBalance) || 100.0, // Ensure it's a number with fallback
+        //             userId: parseInt(userId)
+        //         };
+
+        //         console.log('=== CARD REGISTRATION DEBUG ===');
+        //         console.log('Card registration URL:', `${API_BASE_URL}/register`);
+        //         console.log('Card registration method:', 'POST');
+        //         console.log('Card registration headers:', {
+        //             'Content-Type': 'application/json',
+        //             'Accept': 'application/json'
+        //         });
+        //         console.log('Card registration body (safe):', {
+        //             cardNumber: cardData.cardNumber,
+        //             pin: '****',
+        //             balance: parseFloat(cardData.initialBalance) || 100.0,
+        //             userId: parseInt(userId),
+        //             balanceType: typeof (parseFloat(cardData.initialBalance) || 100.0),
+        //             userIdType: typeof parseInt(userId)
+        //         });
+        //         console.log('Card registration raw JSON:', JSON.stringify(cardRegistrationData));
+
+        //         const cardResponse = await fetch(`${API_BASE_URL}/register`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Accept': 'application/json'
+        //             },
+        //             body: JSON.stringify(cardRegistrationData)
+        //         });
+
+        //         console.log('=== CARD RESPONSE DEBUG ===');
+        //         console.log('Card registration response status:', cardResponse.status);
+        //         console.log('Card registration response statusText:', cardResponse.statusText);
+        //         console.log('Card registration response ok:', cardResponse.ok);
+        //         console.log('Card registration response headers:', Object.fromEntries(cardResponse.headers.entries()));
+
+        //         const cardResponseText = await cardResponse.text();
+        //         console.log('Card registration raw response text:', cardResponseText);
+        //         console.log('Card registration response length:', cardResponseText.length);
+        //         console.log('Card registration response type:', typeof cardResponseText);
+
+        //         if (!cardResponse.ok) {
+        //             console.error('=== CARD REGISTRATION FAILED ===');
+        //             console.error('Status:', cardResponse.status);
+        //             console.error('Status Text:', cardResponse.statusText);
+        //             console.error('Response:', cardResponseText);
+                    
+        //             // Try to parse error response
+        //             let errorMessage = 'Unknown error';
+        //             try {
+        //                 const errorJson = JSON.parse(cardResponseText);
+        //                 console.log('Parsed error JSON:', errorJson);
+        //                 errorMessage = errorJson.message || errorJson.error || errorJson.details || cardResponseText;
+        //             } catch (e) {
+        //                 console.log('Error response is not JSON');
+        //                 errorMessage = cardResponseText || `HTTP ${cardResponse.status}`;
+        //             }
+                    
+        //             throw new Error(`Card registration failed: ${cardResponse.status} - ${errorMessage}`);
+        //         }
+
+        //         let cardResult;
+        //         try {
+        //             cardResult = JSON.parse(cardResponseText);
+        //             console.log('Card registration parsed response:', cardResult);
+        //         } catch (e) {
+        //             console.log('Card registration response is not JSON, treating as success');
+        //             cardResult = { success: true, response: cardResponseText };
+        //         }
+                
+        //         console.log('Card registered successfully:', cardResult);
+
+        //         showSuccess(`Account created successfully! User ID: ${userId}, Card: ${cardData.cardNumber.replace(/(.{4})/g, '$1 ').trim()}. Redirecting to login...`);
+
+        //         clearSensitiveData();
+
+        //         setTimeout(() => {
+        //             window.location.href = 'login.html';
+        //         }, 3000);
+
+        //     } catch (error) {
+        //         console.error('=== ACCOUNT CREATION ERROR ===');
+        //         console.error('Error type:', error.name);
+        //         console.error('Error message:', error.message);
+        //         console.error('Full error:', error);
+
+        //         if (error.message.includes('fetch') || error.name === 'TypeError') {
+        //             showError('Unable to connect to server. Please check your connection and try again.');
+        //         } else if (error.message.includes('Failed to create user profile')) {
+        //             showError('Failed to create user profile. Please check your information and try again.');
+        //         } else if (error.message.includes('Card registration failed')) {
+        //             const errorParts = error.message.split(' - ');
+        //             const detailedError = errorParts.length > 1 ? errorParts[1] : 'Unknown error';
+        //             showError(`Card registration failed: ${detailedError}. User was created successfully with ID: ${userId || 'Unknown'}.`);
+        //         } else {
+        //             showError(error.message || 'Registration failed. Please try again.');
+        //         }
+
+        //         clearSensitiveData();
+        //     }
+        // }
+        // async function createAccount(personalData, cardData) {
+        //     try {
+        //         console.log('Starting account creation process...');
+                
+        //         // Step 1: Create user profile using POST /atm/add
+        //         // Using the exact field names your backend expects
+        //         const userProfileData = {
+        //             fullName: personalData.fullName,  // This should match your backend @RequestBody
+        //             dob: personalData.dob,            // Date of birth
+        //             gender: personalData.gender,      // Gender
+        //             email: personalData.email,        // Email
+        //             phone: personalData.phone,        // Phone number
+        //             address: personalData.address     // Address
+        //         };
+
+        //         console.log('Creating user profile with data:', userProfileData);
+
+        //         const userResponse = await fetch(`${API_BASE_URL}/add`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Accept': 'application/json'
+        //             },
+        //             body: JSON.stringify(userProfileData)
+        //         });
+
+        //         console.log('User creation response status:', userResponse.status);
+        //         console.log('User creation response headers:', Object.fromEntries(userResponse.headers.entries()));
+
+        //         // Get response text first to debug
+        //         const userResponseText = await userResponse.text();
+        //         console.log('User creation raw response:', userResponseText);
+
+        //         if (!userResponse.ok) {
+        //             console.error('User creation failed:', userResponseText);
+        //             throw new Error(`Failed to create user profile: ${userResponse.status} - ${userResponseText}`);
+        //         }
+
+        //         // Try to parse response as JSON
+        //         let userResult;
+        //         try {
+        //             userResult = JSON.parse(userResponseText);
+        //         } catch (e) {
+        //             console.log('User creation response is not JSON, treating as success');
+        //             userResult = { success: true, response: userResponseText };
+        //         }
+                
+        //         console.log('User created successfully. Full response:', userResult);
+                
+        //         // Try multiple ways to extract user ID
+        //         userId = userResult.id || 
+        //                  userResult.userId || 
+        //                  userResult.user?.id || 
+        //                  userResult.data?.id ||
+        //                  userResult.userID ||
+        //                  userResult.ID;
+                
+        //         console.log('Extracted userId:', userId);
+                
+        //         // If no ID found, try to extract from response text
+        //         if (!userId && typeof userResponseText === 'string') {
+        //             const idMatch = userResponseText.match(/id["\s]*:?\s*["\s]*(\d+)/i);
+        //             if (idMatch) {
+        //                 userId = parseInt(idMatch[1]);
+        //                 console.log('Extracted userId from text:', userId);
+        //             }
+        //         }
+                
+        //         if (!userId) {
+        //             console.error('No user ID found in response. Full response:', userResult);
+        //             throw new Error('User created but no ID returned. Response: ' + userResponseText);
+        //         }
+
+        //         // Step 2: Register card using POST /atm/register
+        //         // Make sure all fields are properly formatted
+        //         const cardRegistrationData = {
+        //             cardNumber: cardData.cardNumber,
+        //             pin: cardData.pin,
+        //             balance: cardData.initialBalance || 0.0, // Ensure balance has a default value
+        //             userId: parseInt(userId) // Make sure it's a number
+        //         };
+
+        //         console.log('Registering card with data:', {
+        //             cardNumber: cardData.cardNumber.replace(/\d{8}/, '********'), // Hide middle digits
+        //             pin: '****',
+        //             balance: cardData.initialBalance || 0.0,
+        //             userId: parseInt(userId)
+        //         });
+
+        //         const cardResponse = await fetch(`${API_BASE_URL}/register`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Accept': 'application/json'
+        //             },
+        //             body: JSON.stringify(cardRegistrationData)
+        //         });
+
+        //         console.log('Card registration response status:', cardResponse.status);
+        //         console.log('Card registration response headers:', Object.fromEntries(cardResponse.headers.entries()));
+
+        //         // Get response text first to see what we're dealing with
+        //         const cardResponseText = await cardResponse.text();
+        //         console.log('Card registration raw response:', cardResponseText);
+
+        //         if (!cardResponse.ok) {
+        //             console.error('Card registration failed with status:', cardResponse.status);
+        //             console.error('Card registration error response:', cardResponseText);
+                    
+        //             // Try to parse as JSON if possible for better error message
+        //             let errorMessage = cardResponseText;
+        //             try {
+        //                 const errorJson = JSON.parse(cardResponseText);
+        //                 errorMessage = errorJson.message || errorJson.error || cardResponseText;
+        //             } catch (e) {
+        //                 // Keep original text if not JSON
+        //             }
+                    
+        //             throw new Error(`Card registration failed: ${cardResponse.status} - ${errorMessage}`);
+        //         }
+
+        //         // Try to parse response as JSON
+        //         let cardResult;
+        //         try {
+        //             cardResult = JSON.parse(cardResponseText);
+        //         } catch (e) {
+        //             console.log('Card registration response is not JSON, treating as success');
+        //             cardResult = { success: true, response: cardResponseText };
+        //         }
+                
+        //         console.log('Card registered successfully:', cardResult);
+
+        //         // Success - show success message and redirect
+        //         showSuccess(`Account created successfully! User ID: ${userId}, Card: ${cardData.cardNumber.replace(/(.{4})/g, '$1 ').trim()}. Your balance is securely encrypted. Redirecting to login...`);
+
+        //         // Clear sensitive data from memory
+        //         clearSensitiveData();
+
+        //         // Redirect to login after success
+        //         setTimeout(() => {
+        //             window.location.href = 'login.html';
+        //         }, 3000);
+
+        //     } catch (error) {
+        //         console.error('Account creation error:', error);
+
+        //         // Handle different types of errors with more specific messages
+        //         if (error.message.includes('fetch') || error.name === 'TypeError') {
+        //             showError('Unable to connect to server. Please check your connection and try again.');
+        //         } else if (error.message.includes('Failed to create user profile')) {
+        //             showError('Failed to create user profile. Please check your information and try again.');
+        //         } else if (error.message.includes('Card registration failed')) {
+        //             showError(`Card registration failed: ${error.message.split(' - ')[1] || 'Unknown error'}. User was created successfully. Please contact support with User ID: ${userId || 'Not available'}.`);
+        //         } else {
+        //             showError(error.message || 'Registration failed. Please try again.');
+        //         }
+
+        //         // Clear sensitive data even on error
+        //         clearSensitiveData();
+
+        //         // Optional: Development fallback using localStorage
+        //         if (error.message.includes('Unable to connect to server')) {
+        //             console.log('Using localStorage fallback for development');
+        //             await createAccountFallback(personalData, cardData);
+        //         }
+        //     }
+        // }
+
+        // Clear sensitive data from memory (security best practice)
+        function clearSensitiveData() {
+            // Clear form data
+            try {
+                document.getElementById('pin').value = '';
+                document.getElementById('confirmPin').value = '';
+                document.getElementById('cardNumber').value = '';
+            } catch (e) {
+                console.log('Error clearing form data:', e);
             }
+            
+            // Clear variables
+            userData = {};
+            
+            console.log('Sensitive data cleared from memory');
+        }
 
-            // Save user progress (optional)
-            function saveProgress() {
-                const formData = collectFormData();
-                localStorage.setItem('atmRegistrationProgress', JSON.stringify({
-                    step: currentStep,
-                    data: formData,
-                    timestamp: Date.now()
-                }));
+        // Development fallback using localStorage (remove in production)
+        async function createAccountFallback(personalData, cardData) {
+            try {
+                userId = generateUserId();
+                
+                // Simulate balance encryption for localStorage (development only)
+                const simulatedEncryptedBalance = btoa(cardData.initialBalance.toString()); // Simple base64 encoding for demo
+                
+                const userAccount = {
+                    userId: userId,
+                    cardNumber: cardData.cardNumber,
+                    pin: cardData.pin,
+                    fullName: personalData.fullName,
+                    balance: simulatedEncryptedBalance, // Simulated encrypted balance
+                    email: personalData.email,
+                    phone: personalData.phone,
+                    address: personalData.address,
+                    gender: personalData.gender,
+                    dob: personalData.dob,
+                    createdAt: new Date().toISOString(),
+                    transactions: []
+                };
+
+                const existingUsers = JSON.parse(localStorage.getItem('atmUsers') || '[]');
+                
+                // Check if card number already exists
+                const existingUser = existingUsers.find(user => user.cardNumber === cardData.cardNumber);
+                if (existingUser) {
+                    throw new Error('Card number already exists');
+                }
+
+                existingUsers.push(userAccount);
+                localStorage.setItem('atmUsers', JSON.stringify(existingUsers));
+
+                showSuccess(`Account created successfully! (Demo mode with simulated encryption) User ID: ${userId}. Redirecting to login...`);
+
+                // Clear sensitive data
+                clearSensitiveData();
+
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Fallback creation error:', error);
+                showError(error.message || 'Failed to create account even in demo mode.');
+                clearSensitiveData();
             }
+        }
 
-            // Load user progress (optional)
-            function loadProgress() {
-                const saved = localStorage.getItem('atmRegistrationProgress');
-                if (saved) {
-                    try {
-                        const progress = JSON.parse(saved);
-                        // Only load if saved within last hour
-                        if (Date.now() - progress.timestamp < 3600000) {
-                            // Fill form fields
-                            Object.keys(progress.data).forEach(key => {
-                                const field = document.querySelector(`[name="${key}"]`);
-                                if (field) {
-                                    field.value = progress.data[key];
-                                }
-                            });
-                            
-                            // Set current step
-                            currentStep = progress.step;
-                            showStep(currentStep);
-                            updateStepIndicator();
-                            updateButtonStates();
-                            
-                            showMessage('Your previous progress has been restored.', 'success');
+        // Generate user ID
+        function generateUserId() {
+            return Date.now() + Math.floor(Math.random() * 1000);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.classList.add('show');
+            }, 10);
+           
+            setTimeout(() => {
+                hideMessages();
+            }, 10000);
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.classList.add('show');
+            }, 10);
+        }
+
+        // Hide messages
+        function hideMessages() {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+           
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+           
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }, 300);
+        }
+
+        // Add interactive enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add focus animations
+            const inputs = document.querySelectorAll('.form-input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+               
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
+                });
+            });
+           
+            // Prevent form submission
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                });
+            });
+           
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    document.body.classList.add('keyboard-navigation');
+                }
+            });
+           
+            document.addEventListener('mousedown', function() {
+                document.body.classList.remove('keyboard-navigation');
+            });
+        });
+
+        // Security: Prevent data exposure in console (production safety)
+        if (typeof console !== 'undefined') {
+            const originalLog = console.log;
+            console.log = function(...args) {
+                // Filter out sensitive data from console logs
+                const filteredArgs = args.map(arg => {
+                    if (typeof arg === 'object' && arg !== null) {
+                        const filtered = { ...arg };
+                        if (filtered.pin) filtered.pin = '****';
+                        if (filtered.balance) filtered.balance = '***ENCRYPTED***';
+                        if (filtered.cardNumber && filtered.cardNumber.length > 8) {
+                            filtered.cardNumber = filtered.cardNumber.replace(/\d{8}/, '********');
                         }
-                    } catch (error) {
-                        console.error('Error loading progress:', error);
+                        return filtered;
                     }
-                }
-            }
-
-            // Clear saved progress
-            function clearProgress() {
-                localStorage.removeItem('atmRegistrationProgress');
-            }
-
-            // Enhanced error handling
-            window.addEventListener('error', function(event) {
-                console.error('Global error:', event.error);
-                showMessage('An unexpected error occurred. Please refresh the page and try again.', 'error');
-            });
-
-            // Add form auto-save on input change
-            document.addEventListener('input', function(event) {
-                if (event.target.classList.contains('form-input')) {
-                    // Debounce the save operation
-                    clearTimeout(window.saveTimeout);
-                    window.saveTimeout = setTimeout(saveProgress, 1000);
-                }
-            });
-
-            // Initialize progress loading on page load
-            window.addEventListener('load', function() {
-                // Uncomment to enable progress restoration
-                // loadProgress();
-            });
+                    return arg;
+                });
+                originalLog.apply(console, filteredArgs);
+            };
+        }
     </script>
 </body>
 </html>
