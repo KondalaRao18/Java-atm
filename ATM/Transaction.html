@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulation - Transaction History</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            background: #faf8f2;
+            overflow-x: hidden;
+        }
+
+        /* ATM Background - Dark Blue with Cream Accents */
+        .atm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 20%, #2c3e50 40%, #34495e 60%, #4a6078 80%, #e8dcc0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            z-index: 1;
+        }
+
+        .atm-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(245, 245, 220, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 20, 25, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(15, 20, 25, 0.6) 0%, rgba(245, 245, 220, 0.1) 100%);
+            animation: pulseBackground 6s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ATM Machine Silhouette */
+        .atm-machine {
+            position: fixed;
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(135deg, #0f1419, #1a2332, #2c3e50);
+            border-radius: 20px 0 0 20px;
+            box-shadow: -30px 0 60px rgba(15, 20, 25, 0.5);
+            z-index: 2;
+            opacity: 0.4;
+            border-left: 3px solid rgba(245, 245, 220, 0.3);
+        }
+
+        .atm-machine::before {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 40px;
+            width: 200px;
+            height: 120px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
+            border: 3px solid #34495e;
+            box-shadow: inset 0 0 20px rgba(245, 245, 220, 0.1);
+        }
+
+        .atm-machine::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 40px;
+            width: 150px;
+            height: 20px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(245, 245, 220, 0.2);
+        }
+
+        /* Floating elements */
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .float-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.15;
+            animation: floatUp 25s infinite linear;
+            color: #d4c4a0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.3;
+                transform: translateY(50vh) translateX(50px) rotate(180deg);
+            }
+            95% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(-30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Luxury Pattern Overlay */
+        .dollar-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 245, 220, 0.2) 10px, rgba(245, 245, 220, 0.2) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 196, 160, 0.1) 10px, rgba(212, 196, 160, 0.1) 20px);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Main container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2rem;
+            padding-top: 3rem;
+        }
+
+        .transaction-card {
+            background: rgba(255, 253, 248, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            padding: 3rem;
+            box-shadow: 
+                0 30px 60px rgba(15, 20, 25, 0.4),
+                0 0 100px rgba(52, 73, 94, 0.3),
+                0 0 150px rgba(245, 245, 220, 0.2);
+            max-width: 1200px;
+            width: 100%;
+            border: 2px solid rgba(245, 245, 220, 0.8);
+            animation: slideInScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f5f5dc, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            border: 3px solid rgba(245, 245, 220, 0.8);
+        }
+
+        .main-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #8b7d5d;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-info {
+            font-size: 1rem;
+            color: #8b7d5d;
+            margin-bottom: 1rem;
+        }
+
+        .balance-info {
+            background: rgba(245, 245, 220, 0.6);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1.5rem auto;
+            text-align: center;
+            color: #5d5342;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border: 1px solid rgba(212, 196, 160, 0.5);
+        }
+
+        /* Account info */
+        .account-info {
+            background: rgba(245, 245, 220, 0.6);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(212, 196, 160, 0.5);
+        }
+
+        .account-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .detail-item {
+            background: rgba(255, 253, 248, 0.8);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: #8b7d5d;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #5d5342;
+        }
+
+        .balance-value {
+            color: #4CAF50;
+            font-size: 1.2rem;
+        }
+
+        /* Filter section */
+        .filter-section {
+            background: rgba(245, 245, 220, 0.3);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(212, 196, 160, 0.4);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .filter-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b5f47;
+        }
+
+        .filter-input, .filter-select {
+            padding: 0.7rem;
+            border: 1px solid rgba(212, 196, 160, 0.4);
+            border-radius: 8px;
+            background: rgba(255, 253, 248, 0.9);
+            color: #5d5342;
+            font-size: 0.9rem;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #d4c4a0;
+            box-shadow: 0 0 0 2px rgba(212, 196, 160, 0.2);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        /* Transaction list */
+        .transaction-list {
+            background: rgba(255, 253, 248, 0.5);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 196, 160, 0.3);
+        }
+
+        .transaction-header {
+            background: linear-gradient(135deg, #d4c4a0, #c9b896);
+            padding: 1rem;
+            color: #5d5342;
+            font-weight: 700;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .transaction-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(212, 196, 160, 0.2);
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+            gap: 0.5rem;
+            align-items: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            font-size: 0.9rem;
+        }
+
+        .transaction-item:hover {
+            background: rgba(245, 245, 220, 0.3);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .transaction-date {
+            color: #8b7d5d;
+            font-weight: 500;
+        }
+
+        .transaction-description {
+            font-weight: 600;
+            color: #5d5342;
+        }
+
+        .transaction-type {
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .type-debit {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+        }
+
+        .type-credit {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .amount-debit {
+            color: #d32f2f;
+        }
+
+        .amount-credit {
+            color: #388e3c;
+        }
+
+        .transaction-balance {
+            font-weight: 600;
+            color: #6b5f47;
+            text-align: right;
+        }
+
+        /* Buttons */
+        .action-btn {
+            padding: 0.7rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-filter {
+            background: linear-gradient(135deg, #d4c4a0, #c9b896);
+            color: #5d5342;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #f5f5dc, #f0ead6);
+            color: #6b5f47;
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #8b7d5d, #a0906c);
+            color: #faf8f2;
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Loading and states */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(212, 196, 160, 0.3);
+            border-top: 4px solid #d4c4a0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #8b7d5d;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Messages */
+        .message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+
+        .message.error {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .message.success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .pagination-btn {
+            padding: 0.7rem 1rem;
+            border: 1px solid rgba(212, 196, 160, 0.6);
+            background: rgba(255, 253, 248, 0.8);
+            color: #6b5f47;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d4c4a0, #c9b896);
+            color: #5d5342;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #8b7d5d;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .transaction-header, .transaction-item {
+                grid-template-columns: 1fr 2fr 1fr 1fr;
+            }
+            
+            .transaction-balance {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .atm-machine {
+                display: none;
+            }
+            
+            .main-container {
+                padding: 1rem;
+                padding-top: 2rem;
+            }
+            
+            .transaction-card {
+                padding: 2rem;
+            }
+            
+            .account-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .transaction-header, .transaction-item {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="atm-background"></div>
+    <div class="atm-machine"></div>
+    <div class="dollar-pattern"></div>
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <div class="main-container">
+        <div class="transaction-card">
+            <div class="header">
+                <div class="bank-logo">📊</div>
+                <h1 class="main-title">Transaction History</h1>
+                <div class="card-info" id="cardInfo">Card: •••• •••• ••••</div>
+            </div>
+
+            <div class="account-info">
+                <div class="account-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Card Number</div>
+                        <div class="detail-value" id="cardNumber">•••• •••• ••••</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Current Balance</div>
+                        <div class="detail-value balance-value" id="currentBalance">$0.00</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Account Type</div>
+                        <div class="detail-value" id="accountType">Checking</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="message error"></div>
+            <div id="successMessage" class="message success"></div>
+            
+            <div class="filter-section">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">📅 From Date</label>
+                        <input type="date" class="filter-input" id="fromDate">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">📅 To Date</label>
+                        <input type="date" class="filter-input" id="toDate">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">🔍 Type</label>
+                        <select class="filter-select" id="transactionType">
+                            <option value="">All Types</option>
+                            <option value="debit">Withdrawal</option>
+                            <option value="credit">Deposit</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">💰 Amount</label>
+                        <select class="filter-select" id="amountRange">
+                            <option value="">All Amounts</option>
+                            <option value="0-100">$0 - $100</option>
+                            <option value="100-500">$100 - $500</option>
+                            <option value="500+">$500+</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-buttons">
+                    <button class="action-btn btn-filter" onclick="applyFilters()">
+                        🔍 Filter
+                    </button>
+                    <button class="action-btn btn-clear" onclick="clearFilters()">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
+            
+            <div class="transaction-list">
+                <div class="transaction-header">
+                    <div>📅 Date</div>
+                    <div>📝 Description</div>
+                    <div>🏷️ Type</div>
+                    <div>💰 Amount</div>
+                    <div>💼 Balance</div>
+                </div>
+                
+                <div id="transactionContainer">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">⬅️ Previous</button>
+                <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
+                <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">Next ➡️</button>
+            </div>
+            
+            <button class="action-btn btn-back" onclick="goBack()">
+                ⬅️ Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8080/atm';
+        
+        // User data and state
+        let userData = {};
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            setupEventListeners();
+            createFloatingElements();
+            loadTransactions();
+        });
+
+        // Load user data from session storage
+        function loadUserData() {
+            const savedData = sessionStorage.getItem('atmUserData');
+            
+            if (!savedData) {
+                alert('🔒 Please log in to access ATM services.');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                userData = JSON.parse(savedData);
+                
+                if (!userData.isAuthenticated) {
+                    throw new Error('Not authenticated');
+                }
+                
+                updateUserInfo();
+                console.log('✅ User data loaded:', userData);
+                
+            } catch (error) {
+                console.error('❌ Invalid session data:', error);
+                sessionStorage.removeItem('atmUserData');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Update user info display
+        function updateUserInfo() {
+            const cardEl = document.getElementById('cardNumber');
+            if (userData.cardNumber) {
+                cardEl.textContent = '•••• •••• ••' + userData.cardNumber.slice(-2);
+            }
+            
+            const balanceEl = document.getElementById('currentBalance');
+            if (userData.balance !== undefined) {
+                balanceEl.textContent = formatCurrency(userData.balance);
+            }
+            
+            const cardInfoEl = document.getElementById('cardInfo');
+            if (userData.cardNumber) {
+                cardInfoEl.textContent = 'Card: •••• •••• •••• ' + userData.cardNumber.slice(-4);
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Set default date range (last 30 days)
+            const today = new Date();
+            const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('toDate').value = formatDateForInput(today);
+            document.getElementById('fromDate').value = formatDateForInput(thirtyDaysAgo);
+        }
+
+        // Load transactions from API - BACKEND ONLY, NO SAMPLES
+        async function loadTransactions() {
+            try {
+                showLoadingState();
+                
+                // Get transactions from backend API only
+                const transactions = await fetchTransactions();
+                
+                if (transactions && transactions.length > 0) {
+                    console.log('✅ Successfully loaded', transactions.length, 'transactions from backend');
+                    allTransactions = transactions;
+                    filteredTransactions = [...allTransactions];
+                    displayTransactions();
+                    hideLoadingState();
+                } else {
+                    console.log('ℹ️ No transactions found for this card');
+                    showEmptyState();
+                    hideLoadingState();
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading transactions from backend:', error);
+                showErrorMessage(`Unable to load transactions: ${error.message}`);
+                hideLoadingState();
+            }
+        }
+
+        // Fetch transactions from API using GET endpoint
+        async function fetchTransactions() {
+            if (!userData.cardNumber) {
+                throw new Error('No card number available for transaction lookup');
+            }
+
+            console.log('🏦 Fetching transactions from backend API:', {
+                url: `${API_BASE_URL}/transactions/${userData.cardNumber}`,
+                method: 'GET',
+                cardNumber: userData.cardNumber
+            });
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/transactions/${userData.cardNumber}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ HTTP Error:', response.status, errorText);
+                    
+                    if (response.status === 404) {
+                        console.log('ℹ️ No transactions found for this card');
+                        return []; // Return empty array for 404 (no transactions found)
+                    }
+                    
+                    throw new Error(`Server error ${response.status}: ${errorText}`);
+                }
+                
+                const responseText = await response.text();
+                console.log('📄 Raw response length:', responseText.length);
+                console.log('📄 Raw response preview:', responseText.substring(0, 200));
+                
+                if (!responseText || responseText.trim() === '') {
+                    console.log('ℹ️ Empty response - no transactions available');
+                    return [];
+                }
+                
+                // Parse JSON response
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                    console.log('✅ Successfully parsed JSON response');
+                    console.log('📦 Parsed result:', result);
+                } catch (parseError) {
+                    console.error('❌ JSON Parse Error:', parseError);
+                    console.log('❌ Failed to parse response as JSON:', responseText.substring(0, 500));
+                    throw new Error('Invalid JSON response from server');
+                }
+                
+                // Extract transactions from response
+                let transactions = [];
+                
+                if (Array.isArray(result)) {
+                    transactions = result;
+                    console.log('📋 Found transaction array directly:', transactions.length, 'items');
+                } else if (result.transactions && Array.isArray(result.transactions)) {
+                    transactions = result.transactions;
+                    console.log('📋 Found transactions in result.transactions:', transactions.length, 'items');
+                } else if (result.data && Array.isArray(result.data)) {
+                    transactions = result.data;
+                    console.log('📋 Found transactions in result.data:', transactions.length, 'items');
+                } else if (result.success && result.transactions) {
+                    transactions = result.transactions;
+                    console.log('📋 Found transactions in success response:', transactions.length, 'items');
+                } else {
+                    console.error('❌ Unexpected response format:', result);
+                    throw new Error('Unexpected response format from server');
+                }
+                
+                // Validate and normalize transaction data
+                const normalizedTransactions = transactions.map((transaction, index) => {
+                    try {
+                        return normalizeTransaction(transaction);
+                    } catch (normalizationError) {
+                        console.error(`❌ Error normalizing transaction ${index}:`, normalizationError, transaction);
+                        return null;
+                    }
+                }).filter(t => t !== null);
+                
+                // Sort transactions by date and time (most recent first)
+                normalizedTransactions.sort((a, b) => {
+                    // Primary sort by date (newest first)
+                    const dateComparison = new Date(b.date) - new Date(a.date);
+                    if (dateComparison !== 0) {
+                        return dateComparison;
+                    }
+                    
+                    // Secondary sort by time (newest first) if same date
+                    if (a.time && b.time) {
+                        const timeA = a.time.split(':').map(n => parseInt(n));
+                        const timeB = b.time.split(':').map(n => parseInt(n));
+                        
+                        // Convert to minutes for comparison
+                        const minutesA = timeA[0] * 60 + timeA[1] + (timeA[2] || 0) / 60;
+                        const minutesB = timeB[0] * 60 + timeB[1] + (timeB[2] || 0) / 60;
+                        
+                        return minutesB - minutesA;
+                    }
+                    
+                    // Tertiary sort by transaction ID (assuming higher ID = more recent)
+                    return b.id.localeCompare(a.id);
+                });
+                
+                console.log('✅ Successfully normalized and sorted', normalizedTransactions.length, 'transactions (recent first)');
+                return normalizedTransactions;
+                
+            } catch (networkError) {
+                console.error('❌ Network/Fetch Error:', networkError);
+                
+                if (networkError.name === 'TypeError' && networkError.message.includes('fetch')) {
+                    throw new Error('Unable to connect to server. Please check your network connection.');
+                } else if (networkError.message.includes('CORS')) {
+                    throw new Error('Server access blocked. Please contact administrator.');
+                } else {
+                    throw networkError;
+                }
+            }
+        }
+
+        // Normalize transaction data from your backend API
+        function normalizeTransaction(transaction) {
+            // Ensure required fields exist
+            if (!transaction.id && !transaction.transactionId) {
+                throw new Error('Transaction missing ID');
+            }
+            
+            if (!transaction.date && !transaction.transactionDate && !transaction.timestamp) {
+                throw new Error('Transaction missing date');
+            }
+            
+            if (transaction.amount === undefined || transaction.amount === null) {
+                throw new Error('Transaction missing amount');
+            }
+            
+            // Normalize the transaction object to match your API structure
+            const normalized = {
+                id: transaction.id || transaction.transactionId || `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                date: transaction.date || transaction.transactionDate || transaction.timestamp?.split('T')[0],
+                time: transaction.time || transaction.transactionTime || (transaction.timestamp ? new Date(transaction.timestamp).toLocaleTimeString() : ''),
+                description: normalizeDescription(transaction.description, transaction.type),
+                type: normalizeType(transaction.type || transaction.transactionType),
+                amount: Math.abs(parseFloat(transaction.amount)),
+                balance: parseFloat(transaction.balance || transaction.currentBalance || transaction.accountBalance || 0)
+            };
+            
+            // Validate normalized data
+            if (isNaN(normalized.amount)) {
+                throw new Error('Invalid amount value');
+            }
+            
+            if (isNaN(normalized.balance)) {
+                normalized.balance = 0; // Set default balance if invalid
+            }
+            
+            console.log('✅ Normalized transaction:', normalized);
+            return normalized;
+        }
+
+        // Normalize transaction description to only Deposit/Withdrawal based on your API
+        function normalizeDescription(description, type) {
+            // If type is provided, use it for more accurate description
+            if (type) {
+                const typeStr = type.toLowerCase();
+                if (typeStr.includes('withdraw') || typeStr.includes('debit')) {
+                    return 'Withdrawal';
+                }
+                if (typeStr.includes('deposit') || typeStr.includes('credit')) {
+                    return 'Deposit';
+                }
+            }
+            
+            // Fallback to description analysis
+            if (!description) return 'Transaction';
+            
+            const desc = description.toLowerCase();
+            
+            // Check for withdrawal keywords
+            if (desc.includes('withdraw') || desc.includes('debit') || desc.includes('atm') || 
+                desc.includes('cash') || desc.includes('out')) {
+                return 'Withdrawal';
+            }
+            
+            // Check for deposit keywords
+            if (desc.includes('deposit') || desc.includes('credit') || desc.includes('transfer in') || 
+                desc.includes('salary') || desc.includes('payment') || desc.includes('in')) {
+                return 'Deposit';
+            }
+            
+            // Default to withdrawal for unknown transactions
+            return 'Withdrawal';
+        }
+
+        // Normalize transaction type based on your API format
+        function normalizeType(type) {
+            if (!type) return 'debit';
+            
+            const typeStr = type.toString().toLowerCase();
+            
+            // Handle your API's "Withdraw" and "Deposit" types
+            if (typeStr.includes('deposit') || typeStr.includes('credit') || typeStr.includes('in')) {
+                return 'credit';
+            }
+            
+            if (typeStr.includes('withdraw') || typeStr.includes('debit') || typeStr.includes('out')) {
+                return 'debit';
+            }
+            
+            // Default to debit if unclear
+            return 'debit';
+        }
+
+        // Function to log a new transaction (for future use)
+        async function logTransaction(type, amount, description = null) {
+            if (!userData.cardNumber) {
+                throw new Error('No card number available');
+            }
+
+            const transactionData = {
+                cardNumber: userData.cardNumber,
+                type: type, // "Withdraw" or "Deposit"
+                amount: parseFloat(amount),
+                description: description || `ATM ${type}`
+            };
+
+            console.log('📝 Logging new transaction:', transactionData);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/transactions/log`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                console.log('📡 Log transaction response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Failed to log transaction:', response.status, errorText);
+                    throw new Error(`Failed to log transaction: ${response.status} ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ Transaction logged successfully:', result);
+                
+                // Reload transactions to show the new one
+                await loadTransactions();
+                
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Error logging transaction:', error);
+                throw error;
+            }
+        }
+
+        // Show empty state when no transactions from backend
+        function showEmptyState() {
+            const container = document.getElementById('transactionContainer');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h3>No Transaction History</h3>
+                    <p>No transactions found for this account.</p>
+                    <p>Transactions will appear here once you perform ATM operations.</p>
+                    <button class="action-btn btn-filter" onclick="loadTransactions()" style="margin-top: 1rem;">
+                        🔄 Refresh
+                    </button>
+                </div>
+            `;
+        }
+
+        // Show error message when backend fails
+        function showErrorMessage(message) {
+            const container = document.getElementById('transactionContainer');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon" style="color: #ff6b6b;">⚠️</div>
+                    <h3 style="color: #d32f2f;">Connection Error</h3>
+                    <p style="color: #8b7d5d;">${message}</p>
+                    <p style="color: #888; font-size: 0.9rem; margin-top: 0.5rem;">
+                        Please ensure the backend server is running on http://localhost:8080
+                    </p>
+                    <button class="action-btn btn-filter" onclick="loadTransactions()" style="margin-top: 1rem;">
+                        🔄 Try Again
+                    </button>
+                </div>
+            `;
+        }
+
+        // Get sample transactions for demo - SIMPLIFIED TO ONLY DEPOSIT/WITHDRAWAL
+        function getSampleTransactions() {
+            return [
+                {
+                    id: 'TXN001',
+                    date: '2025-07-03',
+                    time: '14:30:25',
+                    description: 'Withdrawal',
+                    type: 'debit',
+                    amount: 200.00,
+                    balance: userData.balance || 2800.00
+                },
+                {
+                    id: 'TXN002',
+                    date: '2025-07-02',
+                    time: '09:15:42',
+                    description: 'Deposit',
+                    type: 'credit',
+                    amount: 3500.00,
+                    balance: (userData.balance || 2800.00) + 200.00
+                },
+                {
+                    id: 'TXN003',
+                    date: '2025-07-01',
+                    time: '16:45:12',
+                    description: 'Withdrawal',
+                    type: 'debit',
+                    amount: 150.00,
+                    balance: (userData.balance || 2800.00) + 350.00
+                },
+                {
+                    id: 'TXN004',
+                    date: '2025-06-30',
+                    time: '11:22:33',
+                    description: 'Deposit',
+                    type: 'credit',
+                    amount: 500.00,
+                    balance: (userData.balance || 2800.00) + 500.00
+                },
+                {
+                    id: 'TXN005',
+                    date: '2025-06-29',
+                    time: '13:18:45',
+                    description: 'Withdrawal',
+                    type: 'debit',
+                    amount: 85.50,
+                    balance: (userData.balance || 2800.00) + 585.50
+                },
+                {
+                    id: 'TXN006',
+                    date: '2025-06-28',
+                    time: '10:30:15',
+                    description: 'Deposit',
+                    type: 'credit',
+                    amount: 1200.00,
+                    balance: (userData.balance || 2800.00) + 1785.50
+                },
+                {
+                    id: 'TXN007',
+                    date: '2025-06-27',
+                    time: '15:45:30',
+                    description: 'Withdrawal',
+                    type: 'debit',
+                    amount: 300.00,
+                    balance: (userData.balance || 2800.00) + 585.50
+                },
+                {
+                    id: 'TXN008',
+                    date: '2025-06-26',
+                    time: '12:20:10',
+                    description: 'Deposit',
+                    type: 'credit',
+                    amount: 750.00,
+                    balance: (userData.balance || 2800.00) + 885.50
+                }
+            ];
+        }
+
+        // Remove sample transaction function - backend only
+        function getSampleTransactions() {
+            // No sample data - backend only
+            return [];
+        }
+
+        // Display transactions
+        function displayTransactions() {
+            const container = document.getElementById('transactionContainer');
+            const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageTransactions = filteredTransactions.slice(startIndex, endIndex);
+            
+            if (pageTransactions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <h3>No transactions found</h3>
+                        <p>Try adjusting your filters or date range</p>
+                    </div>
+                `;
+                hidePagination();
+                return;
+            }
+            
+            let transactionHTML = '';
+            pageTransactions.forEach((transaction, index) => {
+                const animationDelay = index * 0.1;
+                transactionHTML += `
+                    <div class="transaction-item" style="animation-delay: ${animationDelay}s">
+                        <div class="transaction-date">
+                            ${formatDateForDisplay(transaction.date)}
+                            <br><small style="color: #aaa;">${transaction.time || ''}</small>
+                        </div>
+                        <div class="transaction-description">
+                            ${transaction.description}
+                            <br><small style="color: #888;">ID: ${transaction.id}</small>
+                        </div>
+                        <div class="transaction-type">
+                            <span class="type-${transaction.type}">${transaction.type === 'debit' ? 'WITHDRAWAL' : 'DEPOSIT'}</span>
+                        </div>
+                        <div class="transaction-amount amount-${transaction.type}">
+                            ${transaction.type === 'debit' ? '-' : '+'}${formatCurrency(transaction.amount)}
+                        </div>
+                        <div class="transaction-balance">
+                            ${formatCurrency(transaction.balance)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = transactionHTML;
+            updatePagination(totalPages);
+        }
+
+        // Show/hide loading state
+        function showLoadingState() {
+            const container = document.getElementById('transactionContainer');
+            container.innerHTML = `
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 1rem; color: #8b7d5d;">Loading transactions...</p>
+                </div>
+            `;
+            hidePagination();
+        }
+
+        function hideLoadingState() {
+            // Loading state is replaced when displayTransactions() is called
+        }
+
+        // Apply filters
+        function applyFilters() {
+            clearMessages();
+            
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            const transactionType = document.getElementById('transactionType').value;
+            const amountRange = document.getElementById('amountRange').value;
+            
+            filteredTransactions = allTransactions.filter(transaction => {
+                // Date filter
+                if (fromDate && transaction.date < fromDate) return false;
+                if (toDate && transaction.date > toDate) return false;
+                
+                // Transaction type filter
+                if (transactionType && transaction.type !== transactionType) return false;
+                
+                // Amount range filter
+                if (amountRange) {
+                    const amount = Math.abs(transaction.amount);
+                    switch (amountRange) {
+                        case '0-100':
+                            if (amount > 100) return false;
+                            break;
+                        case '100-500':
+                            if (amount <= 100 || amount > 500) return false;
+                            break;
+                        case '500+':
+                            if (amount <= 500) return false;
+                            break;
+                    }
+                }
+                
+                return true;
+            });
+            
+            currentPage = 1;
+            displayTransactions();
+            
+            const filteredCount = filteredTransactions.length;
+            const totalCount = allTransactions.length;
+            
+            if (filteredCount < totalCount) {
+                showMessage('success', `Filtered ${filteredCount} of ${totalCount} transactions`);
+            }
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            document.getElementById('transactionType').value = '';
+            document.getElementById('amountRange').value = '';
+            
+            filteredTransactions = [...allTransactions];
+            currentPage = 1;
+            displayTransactions();
+            
+            clearMessages();
+            showMessage('success', 'Filters cleared');
+        }
+
+        // Update pagination
+        function updatePagination(totalPages) {
+            const paginationDiv = document.getElementById('pagination');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+            
+            if (totalPages <= 1) {
+                hidePagination();
+                return;
+            }
+            
+            paginationDiv.style.display = 'flex';
+            
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        function hidePagination() {
+            document.getElementById('pagination').style.display = 'none';
+        }
+
+        // Change page
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                displayTransactions();
+                
+                document.querySelector('.transaction-list').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+
+        // Show message
+        function showMessage(type, message) {
+            clearMessages();
+            
+            const messageElement = document.getElementById(`${type}Message`);
+            messageElement.textContent = message;
+            messageElement.classList.add('show');
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 5000);
+        }
+
+        // Clear messages
+        function clearMessages() {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(msg => {
+                msg.classList.remove('show');
+            });
+        }
+
+        // Utility functions
+        function formatDateForInput(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function formatDateForDisplay(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(Math.abs(amount));
+        }
+
+        // Go back to dashboard
+        function goBack() {
+            window.location.href = 'DashBoard.html';
+        }
+
+        // Create floating elements
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const icons = ['💰', '📊', '💳', '🏦', '💸', '📈', '💎', '✨', '🔒', '⚡'];
+            
+            for (let i = 0; i < 12; i++) {
+                const element = document.createElement('div');
+                element.className = 'float-icon';
+                element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                element.style.left = Math.random() * 90 + 5 + '%';
+                element.style.animationDelay = Math.random() * 25 + 's';
+                element.style.animationDuration = Math.random() * 10 + 20 + 's';
+                container.appendChild(element);
+            }
+        }
+
+        // Enhanced debug function for your specific API endpoints
+        window.testTransactionAPI = async function() {
+            console.log('🧪 Testing Your Transaction API Endpoints...');
+            console.log('==========================================');
+            console.log('🔗 GET API URL:', `${API_BASE_URL}/transactions/${userData.cardNumber || '1234567890123456'}`);
+            console.log('🔗 POST API URL:', `${API_BASE_URL}/transactions/log`);
+            console.log('👤 User data:', userData);
+            
+            const testCardNumber = userData.cardNumber || '1234567890123456';
+            
+            // Test 1: GET /atm/transactions/{cardNumber}
+            console.log('\n📥 Testing GET endpoint...');
+            console.log('⏳ Making GET request...');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/transactions/${testCardNumber}`, {
+                    method: 'GET',
+                    headers: { 
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 GET Response received!');
+                console.log('📡 Status:', response.status);
+                console.log('📡 Status Text:', response.statusText);
+                console.log('📡 Headers:', Object.fromEntries(response.headers.entries()));
+                
+                const responseText = await response.text();
+                console.log('📄 GET Raw response:');
+                console.log(responseText);
+                console.log('📏 Response length:', responseText.length);
+                
+                if (response.ok) {
+                    console.log('✅ GET Request successful!');
+                    
+                    if (responseText.trim()) {
+                        try {
+                            const jsonResult = JSON.parse(responseText);
+                            console.log('✅ Successfully parsed GET JSON:');
+                            console.log(jsonResult);
+                            
+                            if (Array.isArray(jsonResult)) {
+                                console.log('📋 Found direct array with', jsonResult.length, 'transactions');
+                                jsonResult.forEach((txn, i) => {
+                                    console.log(`  Transaction ${i + 1}:`, txn);
+                                });
+                            } else {
+                                console.log('📋 Transaction data structure:', jsonResult);
+                            }
+                            
+                        } catch (parseError) {
+                            console.error('❌ GET JSON parsing failed:', parseError.message);
+                        }
+                    } else {
+                        console.log('ℹ️ Empty GET response - no transactions found');
+                    }
+                } else {
+                    console.error('❌ GET Request failed with status:', response.status);
+                    console.error('❌ GET Error response:', responseText);
+                }
+                
+            } catch (error) {
+                console.error('❌ GET Network/Connection error:', error);
+            }
+            
+            // Test 2: POST /atm/transactions/log (optional test)
+            console.log('\n📤 Testing POST endpoint (transaction logging)...');
+            console.log('ℹ️ This will create a test transaction in your system!');
+            
+            const shouldTestPost = confirm('Do you want to test the POST endpoint? This will create a test transaction.');
+            
+            if (shouldTestPost) {
+                const testTransaction = {
+                    cardNumber: testCardNumber,
+                    type: "Withdraw",
+                    amount: 1, // Small test amount
+                    description: "API Test Transaction"
+                };
+                
+                console.log('📤 Sending POST request with:', testTransaction);
+                
+                try {
+                    const postResponse = await fetch(`${API_BASE_URL}/transactions/log`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(testTransaction)
+                    });
+                    
+                    console.log('📡 POST Response received!');
+                    console.log('📡 Status:', postResponse.status);
+                    console.log('📡 Status Text:', postResponse.statusText);
+                    
+                    const postResponseText = await postResponse.text();
+                    console.log('📄 POST Raw response:');
+                    console.log(postResponseText);
+                    
+                    if (postResponse.ok) {
+                        console.log('✅ POST Request successful!');
+                        console.log('✅ Test transaction logged successfully');
+                        
+                        // Reload transactions to show the new one
+                        console.log('🔄 Reloading transactions...');
+                        loadTransactions();
+                        
+                    } else {
+                        console.error('❌ POST Request failed with status:', postResponse.status);
+                        console.error('❌ POST Error response:', postResponseText);
+                    }
+                    
+                } catch (postError) {
+                    console.error('❌ POST Network/Connection error:', postError);
+                }
+            } else {
+                console.log('⏭️ Skipping POST endpoint test');
+            }
+            
+            console.log('\n==========================================');
+            console.log('💡 API Testing Complete!');
+            console.log('💡 Check the console output above for detailed results');
+        };
+
+        // Test function for logging a specific transaction
+        window.testLogTransaction = async function(type = "Withdraw", amount = 100, description = "Test Transaction") {
+            console.log('📝 Testing transaction logging...');
+            
+            try {
+                const result = await logTransaction(type, amount, description);
+                console.log('✅ Successfully logged test transaction:', result);
+                showMessage('success', `Test ${type.toLowerCase()} transaction logged successfully!`);
+            } catch (error) {
+                console.error('❌ Failed to log test transaction:', error);
+                showMessage('error', `Failed to log transaction: ${error.message}`);
+            }
+        };
+
+        // Enhanced session data viewer
+        window.showSession = function() {
+            console.log('📊 Current Session Data:');
+            console.log('==========================================');
+            console.log('🔐 User Authentication:', userData.isAuthenticated);
+            console.log('💳 Card Number:', userData.cardNumber);
+            console.log('💰 Balance:', userData.balance);
+            console.log('📧 Full User Data:', userData);
+            console.log('==========================================');
+            console.log('🗄️ Session Storage Raw:', sessionStorage.getItem('atmUserData'));
+            console.log('🌐 API Base URL:', API_BASE_URL);
+            console.log('📊 Transactions Loaded:', allTransactions.length);
+            console.log('🔍 Filtered Transactions:', filteredTransactions.length);
+            console.log('📄 Current Page:', currentPage);
+            console.log('==========================================');
+        };
+
+        // Function to manually test transaction normalization
+        window.testNormalization = function(sampleTransaction) {
+            console.log('🧪 Testing transaction normalization...');
+            console.log('📥 Input:', sampleTransaction);
+            
+            try {
+                const normalized = normalizeTransaction(sampleTransaction);
+                console.log('✅ Normalized output:', normalized);
+                return normalized;
+            } catch (error) {
+                console.error('❌ Normalization failed:', error.message);
+                return null;
+            }
+        };
+
+        // Function to reload transactions manually
+        window.reloadTransactions = function() {
+            console.log('🔄 Manually reloading transactions...');
+            loadTransactions();
+        };
+
+        // Enhanced error handling for network issues
+        window.addEventListener('online', function() {
+            console.log('🌐 Network connection restored');
+            showMessage('success', 'Network connection restored. Reloading transactions...');
+            setTimeout(() => loadTransactions(), 1000);
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('📴 Network connection lost');
+            showMessage('error', 'Network connection lost. Some features may not work.');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+                event.preventDefault();
+                document.getElementById('fromDate').focus();
+            }
+            
+            if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+                event.preventDefault();
+                loadTransactions();
+            }
+            
+            if (event.key === 'ArrowLeft' && event.altKey) {
+                event.preventDefault();
+                changePage(-1);
+            }
+            if (event.key === 'ArrowRight' && event.altKey) {
+                event.preventDefault();
+                changePage(1);
+            }
+            
+            if (event.key === 'Escape') {
+                clearFilters();
+            }
+        });
+
+        console.log('📊 SecureBank ATM Transaction History System Initialized');
+        console.log('💡 Backend-Only Integration:');
+        console.log('   - NO sample/demo data - 100% backend driven');
+        console.log('   - Real-time transaction fetching from your API');
+        console.log('   - GET /atm/transactions/{cardNumber}');
+        console.log('   - POST /atm/transactions/log');
+        console.log('🔒 Security: Session validation, user authentication');
+        console.log('🧪 Debug Commands:');
+        console.log('   - testTransactionAPI() - Test your backend endpoints');
+        console.log('   - testLogTransaction() - Test transaction logging');
+        console.log('   - showSession() - View current session data');
+        console.log('   - reloadTransactions() - Manually reload from backend');
+        console.log('🌐 API Endpoint:', API_BASE_URL + '/transactions/{cardNumber}');
+        console.log('⚠️ Requires backend server running on http://localhost:8080');
+        console.log('📡 Ready to connect to your backend API!');
+    </script>
+</body>
+</html>

@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Dashboard - Main Menu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            background: #faf8f2;
+        }
+
+        /* ATM Background - Dark Blue with Cream Accents */
+        .atm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 20%, #2c3e50 40%, #34495e 60%, #4a6078 80%, #e8dcc0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            z-index: 1;
+        }
+
+        .atm-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(245, 245, 220, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 20, 25, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(15, 20, 25, 0.6) 0%, rgba(245, 245, 220, 0.1) 100%);
+            animation: pulseBackground 6s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ATM Machine Silhouette */
+        .atm-machine {
+            position: absolute;
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(135deg, #0f1419, #1a2332, #2c3e50);
+            border-radius: 20px 0 0 20px;
+            box-shadow: -30px 0 60px rgba(15, 20, 25, 0.5);
+            z-index: 2;
+            opacity: 0.4;
+            border-left: 3px solid rgba(245, 245, 220, 0.3);
+        }
+
+        .atm-machine::before {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 40px;
+            width: 200px;
+            height: 120px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
+            border: 3px solid #34495e;
+            box-shadow: inset 0 0 20px rgba(245, 245, 220, 0.1);
+        }
+
+        .atm-machine::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 40px;
+            width: 150px;
+            height: 20px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(245, 245, 220, 0.2);
+        }
+
+        /* Floating elements */
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .float-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.15;
+            animation: floatUp 25s infinite linear;
+            color: #d4c4a0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.3;
+                transform: translateY(50vh) translateX(50px) rotate(180deg);
+            }
+            95% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(-30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Main container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 253, 248, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            padding: 3rem;
+            box-shadow: 
+                0 30px 60px rgba(15, 20, 25, 0.4),
+                0 0 100px rgba(52, 73, 94, 0.3),
+                0 0 150px rgba(245, 245, 220, 0.2),
+                inset 0 1px 0 rgba(255, 253, 248, 0.5);
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+            border: 2px solid rgba(245, 245, 220, 0.8);
+            animation: slideInScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(245, 245, 220, 0.15), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes slideInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f5f5dc, #f0ead6, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 
+                0 20px 40px rgba(212, 196, 160, 0.5),
+                0 0 60px rgba(245, 245, 220, 0.4);
+            animation: logoFloat 4s ease-in-out infinite;
+            position: relative;
+            border: 3px solid rgba(245, 245, 220, 0.8);
+        }
+
+        .bank-logo::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: linear-gradient(45deg, #faf8f2, #f5f5dc, #f0ead6, #ede4d1, #e8dcc0);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            z-index: -1;
+            animation: gradientRotate 4s linear infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(5deg); }
+            75% { transform: translateY(-5px) rotate(-3deg); }
+        }
+
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b7d5d 0%, #a0906c 50%, #d4c4a0 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 40px rgba(212, 196, 160, 0.4);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .welcome-message {
+            font-size: 1.1rem;
+            color: #8b7d5d;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, rgba(245, 245, 220, 0.6), rgba(212, 196, 160, 0.4));
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(212, 196, 160, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .account-balance {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .account-balance:hover {
+            transform: scale(1.05);
+            color: #d4c4a0;
+            text-shadow: 0 0 10px rgba(212, 196, 160, 0.6);
+        }
+
+        .account-number {
+            font-size: 1rem;
+            color: #6b5f47;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+
+        .last-login {
+            font-size: 0.9rem;
+            color: #8b7d5d;
+            margin-top: 0.5rem;
+        }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .menu-option {
+            background: linear-gradient(135deg, rgba(255, 253, 248, 0.9), rgba(245, 245, 220, 0.7));
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            border: 2px solid rgba(212, 196, 160, 0.6);
+            box-shadow: 
+                0 15px 35px rgba(212, 196, 160, 0.3),
+                0 0 50px rgba(245, 245, 220, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+        }
+
+        .menu-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .menu-option:hover::before {
+            left: 100%;
+        }
+
+        .menu-option:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(212, 196, 160, 0.5),
+                0 0 80px rgba(245, 245, 220, 0.4);
+            border-color: rgba(212, 196, 160, 0.8);
+        }
+
+        .menu-option.logout {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 82, 82, 0.1));
+            border-color: rgba(255, 107, 107, 0.4);
+        }
+
+        .menu-option.logout:hover {
+            box-shadow: 
+                0 25px 50px rgba(255, 107, 107, 0.3),
+                0 0 80px rgba(255, 82, 82, 0.2);
+            border-color: rgba(255, 107, 107, 0.6);
+        }
+
+        .menu-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        .menu-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .menu-description {
+            font-size: 1rem;
+            color: #6b5f47;
+            line-height: 1.5;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            background: linear-gradient(135deg, #d4c4a0 0%, #c9b896 100%);
+            color: #5d5342;
+            border: none;
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(212, 196, 160, 0.4);
+            border: 2px solid rgba(245, 245, 220, 0.6);
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(212, 196, 160, 0.6);
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .status-info {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(212, 196, 160, 0.4);
+            color: #a0906c;
+            font-size: 0.9rem;
+        }
+
+        .session-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        /* Luxury Pattern Overlay */
+        .dollar-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 245, 220, 0.2) 10px, rgba(245, 245, 220, 0.2) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 196, 160, 0.1) 10px, rgba(212, 196, 160, 0.1) 20px);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 253, 248, 0.9);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(212, 196, 160, 0.3);
+            border-top: 4px solid #d4c4a0;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Balance reveal animation */
+        .balance-reveal {
+            animation: balanceGlow 0.3s ease-in-out;
+        }
+
+        @keyframes balanceGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(212, 196, 160, 0.6);
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 20px rgba(212, 196, 160, 1);
+                transform: scale(1.1);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .atm-machine {
+                display: none;
+            }
+            
+            .dashboard-card {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+            
+            .menu-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .menu-option {
+                padding: 2rem 1.5rem;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .session-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Accessibility */
+        .menu-option:focus,
+        .quick-btn:focus {
+            outline: 3px solid rgba(212, 196, 160, 0.8);
+            outline-offset: 2px;
+        }
+
+        /* Special Effects */
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #d4c4a0;
+            border-radius: 50%;
+            animation: sparkle 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="atm-background"></div>
+    <div class="atm-machine"></div>
+    <div class="dollar-pattern"></div>
+    
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="main-container">
+        <div class="dashboard-card">
+            <div class="header">
+                <div class="bank-logo">🏦</div>
+                <h1 class="main-title">ATM Dashboard</h1>
+                <p class="welcome-message">Welcome back! Choose an option below</p>
+                
+                <div class="user-info">
+                    <div class="account-balance" id="accountBalance" onclick="showBalance()">Balance: $ XXXXX</div>
+                    <div class="account-number" id="accountNumber">Account: </div>
+                    <div class="last-login" id="lastLogin">Last login: Today at 2:45 PM</div>
+                </div>
+            </div>
+
+            <div id="statusMessage" class="status-message"></div>
+            
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="quickBalance()">
+                    <span>💰</span>
+                    Quick Balance
+                </button>
+                <button class="quick-btn" onclick="quickWithdraw()">
+                    <span>💸</span>
+                    Quick $100
+                </button>
+                <button class="quick-btn" onclick="quickStatement()">
+                    <span>📄</span>
+                    Mini Statement
+                </button>
+            </div>
+            
+            <div class="menu-grid">
+                <div class="menu-option" tabindex="0">
+                    <span class="menu-icon">💳</span>
+                    <a href="Deposit.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Deposit</h3></a>
+                    <p class="menu-description">Deposit cash or checks into your account securely</p>
+                </div>
+                
+                <div class="menu-option"  tabindex="0">
+                    <span class="menu-icon">💸</span>
+                    <a href="Withdraw.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Withdraw</h3></a>
+                    <p class="menu-description">Withdraw cash from your account with various denominations</p>
+                </div>
+                
+                <div class="menu-option"  tabindex="0">
+                    <span class="menu-icon">📋</span>
+                    <a href="Transaction.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Transaction History</h3></a>
+                    <p class="menu-description">View your recent transactions and account activity</p>
+                    <div class="notification-badge">3</div>
+                </div>
+                
+                <div class="menu-option" tabindex="0">
+                    <span class="menu-icon">🔐</span>
+                    <a href="ChangePin.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Change PIN</h3></a>
+                    <p class="menu-description">Update your PIN for enhanced security</p>
+                </div>
+        
+                <div class="menu-option logout"  tabindex="0">
+                    <span class="menu-icon">🚪</span>
+                    <a href="Welcome.html" style="color: #2c3e50; text-decoration: none;"><h3 class="menu-title">Logout</h3></a>
+                    <p class="menu-description">Safely exit your ATM session</p>
+                </div>
+            </div>
+            
+            <div class="footer-info">
+                <p>🔒 Your session is secured with 256-bit encryption</p>
+                <div class="session-info">
+                    <span>Session ID: ATM-2025-001234</span>
+                    <span id="sessionTimer">Session expires in: 14:45</span>
+                    <span>Location: Main Branch ATM #01</span>
+                </div>
+                <p style="margin-top: 1rem;">© 2025 SecureBank ATM System</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = '/atm';
+        
+        // Session management
+        let sessionTimer = 900; // 15 minutes in seconds
+        let timerInterval;
+        let currentBalance = null; // Store actual balance
+        let isBalanceVisible = false; // Track balance visibility
+
+        // Create floating elements
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const icons = ['💰', '💳', '🏦', '💎', '🌟', '✨', '🔒', '🔐', '💸', '📋', '🏆', '👑'];
+            const count = 12;
+            
+            for (let i = 0; i < count; i++) {
+                const element = document.createElement('div');
+                element.className = 'float-icon';
+                element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                
+                element.style.left = (Math.random() * 90 + 5) + '%';
+                element.style.animationDelay = (Math.random() * 25) + 's';
+                element.style.animationDuration = (Math.random() * 10 + 20) + 's';
+                element.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
+                
+                container.appendChild(element);
+            }
+        }
+
+        // Create sparkle effects
+        function createSparkles() {
+            const container = document.querySelector('.dashboard-card');
+            for (let i = 0; i < 20; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(sparkle);
+                
+                // Remove sparkle after animation
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 4000);
+            }
+        }
+
+        // Show status message
+        function showMessage(message, type = 'info') {
+            const messageElement = document.getElementById('statusMessage');
+            messageElement.className = `status-message status-${type} show`;
+            messageElement.textContent = message;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 5000);
+        }
+
+        // Show loading overlay
+        function showLoading(show = true) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+
+        // Session timer
+        function startSessionTimer() {
+            timerInterval = setInterval(() => {
+                sessionTimer--;
+                const minutes = Math.floor(sessionTimer / 60);
+                const seconds = sessionTimer % 60;
+                
+                document.getElementById('sessionTimer').textContent = 
+                    `Session expires in: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (sessionTimer <= 0) {
+                    clearInterval(timerInterval);
+                    logout(true); // Auto logout
+                } else if (sessionTimer <= 60) {
+                    document.getElementById('sessionTimer').style.color = '#ff6b6b';
+                    if (sessionTimer % 10 === 0) {
+                        showMessage(`⚠️ Session expires in ${sessionTimer} seconds`, 'error');
+                    }
+                }
+            }, 1000);
+        }
+
+        // Extend session
+        function extendSession() {
+            sessionTimer = 900; // Reset to 15 minutes
+            document.getElementById('sessionTimer').style.color = '#a0906c';
+            showMessage('✅ Session extended for 15 minutes', 'success');
+        }
+
+        // Show balance for 3 seconds when clicked
+        function showBalance() {
+            if (isBalanceVisible) return; // Prevent multiple clicks
+            
+            const balanceElement = document.getElementById('accountBalance');
+            if (!currentBalance) return;
+            
+            isBalanceVisible = true;
+            
+            // Add animation class
+            balanceElement.classList.add('balance-reveal');
+            
+            // Show actual balance
+            const formattedBalance = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(currentBalance);
+            
+            balanceElement.textContent = `Balance: ${formattedBalance}`;
+            
+            // Hide balance after 3 seconds
+            setTimeout(() => {
+                balanceElement.textContent = 'Balance: $ XXXXX';
+                balanceElement.classList.remove('balance-reveal');
+                isBalanceVisible = false;
+            }, 3000);
+        }
+
+        // Mask card number to show only last 2 digits
+        function maskCardNumber(cardNumber) {
+            const clean = cardNumber.replace(/\D/g, '').trim();
+            const last2 = clean.slice(-2);
+            return `****-****-**${last2}`;
+        }
+
+        // Quick actions
+        function quickBalance() {
+            showLoading();
+            setTimeout(() => {
+                showLoading(false);
+                if (currentBalance) {
+                    const formattedBalance = new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD'
+                    }).format(currentBalance);
+                    showMessage(`💰 Current Balance: ${formattedBalance}`, 'success');
+                } else {
+                    showMessage('💰 Current Balance: $12,540.75', 'success');
+                }
+                extendSession();
+                createSparkles();
+            }, 1500);
+        }
+
+        function quickWithdraw() {
+            if (confirm('💸 Withdraw $100 from your account?')) {
+                showLoading();
+                setTimeout(() => {
+                    showLoading(false);
+                    // Update balance if we have current balance
+                    if (currentBalance && currentBalance >= 100) {
+                        currentBalance -= 100;
+                        // Update the session storage
+                        const userData = JSON.parse(sessionStorage.getItem('atmUserData') || '{}');
+                        userData.balance = currentBalance;
+                        sessionStorage.setItem('atmUserData', JSON.stringify(userData));
+                    }
+                    showMessage('✅ $100 withdrawn successfully! Please take your cash.', 'success');
+                    extendSession();
+                    createSparkles();
+                }, 2000);
+            }
+        }
+
+        function quickStatement() {
+            showLoading();
+            setTimeout(() => {
+                showLoading(false);
+                showMessage('📄 Mini statement printed. Please take your receipt.', 'success');
+                extendSession();
+                createSparkles();
+            }, 1500);
+        }
+
+        // Reset dashboard to initial state
+        function resetDashboard() {
+            document.getElementById('accountBalance').textContent = 'Balance: $ XXXXX';
+            document.getElementById('sessionTimer').style.color = '#a0906c';
+            sessionTimer = 900;
+            startSessionTimer();
+            showMessage('🔄 Dashboard reset - Please login again', 'info');
+            
+            // Reset notification badge
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+                badge.style.display = 'flex';
+            }
+        }
+
+        // Keyboard navigation
+        function handleKeyboard(event) {
+            if (event.key === 'Escape') {
+                logout();
+            } else if (event.key === 'Enter') {
+                const focusedElement = document.activeElement;
+                if (focusedElement && focusedElement.classList.contains('menu-option')) {
+                    focusedElement.click();
+                }
+            } else if (event.key === '1') {
+                navigateToDeposit();
+            } else if (event.key === '2') {
+                navigateToWithdraw();
+            } else if (event.key === '3') {
+                navigateToHistory();
+            } else if (event.key === '4') {
+                navigateToChangePin();
+            } else if (event.key === '5') {
+                logout();
+            } else if (event.key === 'b' || event.key === 'B') {
+                quickBalance();
+            } else if (event.key === 'w' || event.key === 'W') {
+                quickWithdraw();
+            } else if (event.key === 's' || event.key === 'S') {
+                quickStatement();
+            }
+        }
+
+        // Add hover effects for menu options
+        function addHoverEffects() {
+            const menuOptions = document.querySelectorAll('.menu-option');
+            menuOptions.forEach(option => {
+                option.addEventListener('mouseenter', () => {
+                    option.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                
+                option.addEventListener('mouseleave', () => {
+                    option.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        }
+
+        // Add click effects
+        function addClickEffects() {
+            const clickableElements = document.querySelectorAll('.menu-option, .quick-btn');
+            clickableElements.forEach(element => {
+                element.addEventListener('click', () => {
+                    element.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        element.style.transform = '';
+                    }, 150);
+                });
+            });
+        }
+
+        // Update time display
+        function updateTimeDisplay() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const dateString = now.toLocaleDateString();
+            
+            document.getElementById('lastLogin').textContent = `Last login: ${dateString} at ${timeString}`;
+        }
+
+        // Initialize security features
+        function initializeSecurity() {
+            // Disable right-click context menu
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+            
+            // Disable text selection
+            document.addEventListener('selectstart', (e) => {
+                e.preventDefault();
+            });
+            
+            // Disable drag and drop
+            document.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+            });
+            
+            // Warn about leaving page
+            window.addEventListener('beforeunload', (e) => {
+                e.preventDefault();
+                e.returnValue = 'Are you sure you want to leave? Your ATM session will be terminated.';
+            });
+        }
+
+        // Add accessibility features
+        function initializeAccessibility() {
+            // Add aria labels
+            const menuOptions = document.querySelectorAll('.menu-option');
+            menuOptions.forEach((option, index) => {
+                option.setAttribute('aria-label', `Option ${index + 1}: ${option.querySelector('.menu-title').textContent}`);
+            });
+            
+            // Add keyboard shortcuts info
+            const shortcutsInfo = document.createElement('div');
+            shortcutsInfo.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                display: none;
+                z-index: 1001;
+            `;
+            shortcutsInfo.innerHTML = `
+                <strong>Keyboard Shortcuts:</strong><br>
+                1-5: Menu options<br>
+                B: Quick Balance<br>
+                W: Quick Withdraw<br>
+                S: Quick Statement<br>
+                ESC: Logout
+            `;
+            document.body.appendChild(shortcutsInfo);
+            
+            // Toggle shortcuts help with F1
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    shortcutsInfo.style.display = shortcutsInfo.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+        }
+
+        // Initialize dashboard when page loads
+        function initializeDashboard() {
+            // Create visual effects
+            createFloatingElements();
+            
+            // Add interaction effects
+            addHoverEffects();
+            addClickEffects();
+            
+            // Start session timer
+            startSessionTimer();
+            
+            // Update time display
+            updateTimeDisplay();
+            setInterval(updateTimeDisplay, 60000); // Update every minute
+            
+            // Add event listeners
+            document.addEventListener('keydown', handleKeyboard);
+            
+            // Initialize security features
+            initializeSecurity();
+            
+            // Initialize accessibility features
+            initializeAccessibility();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showMessage('🎉 Welcome to SecureBank ATM! Your session is now active.', 'success');
+                createSparkles();
+            }, 1000);
+            
+            // Auto-save session data (in real app, this would sync with server)
+            setInterval(() => {
+                localStorage.setItem('atmSession', JSON.stringify({
+                    sessionId: 'ATM-2025-001234',
+                    timestamp: Date.now(),
+                    timeRemaining: sessionTimer
+                }));
+            }, 30000); // Save every 30 seconds
+        }
+
+        // Load session data on page load
+        function loadSessionData() {
+            const savedSession = localStorage.getItem('atmSession');
+            if (savedSession) {
+                const sessionData = JSON.parse(savedSession);
+                const timeDiff = Date.now() - sessionData.timestamp;
+                const remainingTime = sessionData.timeRemaining - Math.floor(timeDiff / 1000);
+                
+                if (remainingTime > 0) {
+                    sessionTimer = remainingTime;
+                    showMessage('🔄 Session restored', 'info');
+                }
+            }
+        }
+
+        function loadUserData() {
+            try {
+                const savedUserData = sessionStorage.getItem('atmUserData');
+                if (savedUserData) {
+                    const userData = JSON.parse(savedUserData);
+                    
+                    // Store balance for use in balance reveal
+                    currentBalance = userData.balance || 12540.75;
+                    
+                    // Keep balance hidden initially
+                    const balanceElement = document.getElementById('accountBalance');
+                    if (balanceElement) {
+                        balanceElement.textContent = 'Balance: $ XXXXX';
+                    }
+                    
+                    // Update card number display with only last 2 digits
+                    const accountElement = document.getElementById('accountNumber');
+                    if (accountElement && userData.cardNumber) {
+                        const maskedCard = maskCardNumber(userData.cardNumber);
+                        accountElement.textContent = `Account: ${maskedCard}`;
+                    }
+                    
+                    // Update customer name if you have a name element
+                    const nameElement = document.getElementById('customerName');
+                    if (nameElement && userData.customerName) {
+                        nameElement.textContent = userData.customerName;
+                    }
+                    
+                    console.log('✅ User data loaded successfully');
+                    return userData;
+                } else {
+                    console.warn('⚠️ No user data found - redirecting to login');
+                    window.location.href = 'login.html';
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ Error loading user data:', error);
+                window.location.href = 'login.html';
+                return null;
+            }
+        }
+
+        // Page load event
+        window.addEventListener('load', () => {
+            // Load user data first
+            const userData = loadUserData();
+            if (userData) {
+                // Only initialize dashboard if user is authenticated
+                loadSessionData();
+                initializeDashboard();
+            }
+        });
+
+        // Page unload event
+        window.addEventListener('beforeunload', () => {
+            clearInterval(timerInterval);
+            localStorage.removeItem('atmSession');
+        });
+
+        // Error handling
+        window.addEventListener('error', (event) => {
+            console.error('ATM Dashboard Error:', event.error);
+            showMessage('⚠️ An error occurred. Please try again.', 'error');
+        });
+
+        // Touch device support
+        if ('ontouchstart' in window) {
+            document.addEventListener('touchstart', () => {
+                // Add touch-specific styles
+                document.body.classList.add('touch-device');
+            });
+        }
+    </script>
+</body>
+</html>

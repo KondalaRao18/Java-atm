@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulation - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            background: #faf8f2;
+            overflow-x: hidden; /* Only prevent horizontal scroll */
+        }
+ 
+        /* ATM Background - Dark Blue with Cream Accents */
+        .atm-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 20%, #2c3e50 40%, #34495e 60%, #4a6078 80%, #e8dcc0 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            z-index: 1;
+        }
+
+        .atm-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(245, 245, 220, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(15, 20, 25, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.3) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(15, 20, 25, 0.6) 0%, rgba(245, 245, 220, 0.1) 100%);
+            animation: pulseBackground 6s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes pulseBackground {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* ATM Machine Silhouette */
+        .atm-machine {
+            position: fixed; /* Changed from absolute to fixed */
+            right: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(135deg, #0f1419, #1a2332, #2c3e50);
+            border-radius: 20px 0 0 20px;
+            box-shadow: -30px 0 60px rgba(15, 20, 25, 0.5);
+            z-index: 2;
+            opacity: 0.4;
+            border-left: 3px solid rgba(245, 245, 220, 0.3);
+        }
+
+        .atm-machine::before {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 40px;
+            width: 200px;
+            height: 120px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 10px;
+            border: 3px solid #34495e;
+            box-shadow: inset 0 0 20px rgba(245, 245, 220, 0.1);
+        }
+
+        .atm-machine::after {
+            content: '';
+            position: absolute;
+            bottom: 100px;
+            left: 40px;
+            width: 150px;
+            height: 20px;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(245, 245, 220, 0.2);
+        }
+
+        /* Floating elements */
+        .floating-elements {
+            position: fixed; /* Changed from absolute to fixed */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .float-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.15;
+            animation: floatUp 25s infinite linear;
+            color: #d4c4a0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0px) rotate(0deg);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 0.3;
+                transform: translateY(50vh) translateX(50px) rotate(180deg);
+            }
+            95% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(-30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Main container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: rgba(255, 253, 248, 0.97);
+            backdrop-filter: blur(30px);
+            border-radius: 25px;
+            padding: 3.5rem 3rem;
+            box-shadow: 
+                0 30px 60px rgba(15, 20, 25, 0.4),
+                0 0 100px rgba(52, 73, 94, 0.3),
+                0 0 150px rgba(245, 245, 220, 0.2),
+                inset 0 1px 0 rgba(255, 253, 248, 0.5);
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            border: 2px solid rgba(245, 245, 220, 0.8);
+            animation: slideInScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            margin: 2rem auto; /* Added margin for better spacing */
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(245, 245, 220, 0.15), transparent);
+            animation: shimmer 3s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes slideInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f5f5dc, #f0ead6, #d4c4a0);
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 
+                0 20px 40px rgba(212, 196, 160, 0.5),
+                0 0 60px rgba(245, 245, 220, 0.4);
+            animation: logoFloat 4s ease-in-out infinite;
+            position: relative;
+            border: 3px solid rgba(245, 245, 220, 0.8);
+        }
+
+        .bank-logo::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            background: linear-gradient(45deg, #faf8f2, #f5f5dc, #f0ead6, #ede4d1, #e8dcc0);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            z-index: -1;
+            animation: gradientRotate 4s linear infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(5deg); }
+            75% { transform: translateY(-5px) rotate(-3deg); }
+        }
+
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b7d5d 0%, #a0906c 50%, #d4c4a0 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 40px rgba(212, 196, 160, 0.4);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #8b7d5d;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        /* Form Styles */
+        .login-form {
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6b5f47;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            font-size: 1.1rem;
+            border: 2px solid rgba(212, 196, 160, 0.4);
+            border-radius: 15px;
+            background: rgba(255, 253, 248, 0.8);
+            color: #5d5342;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #d4c4a0;
+            background: rgba(255, 253, 248, 0.95);
+            box-shadow: 
+                0 0 0 4px rgba(212, 196, 160, 0.2),
+                0 15px 35px rgba(212, 196, 160, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .form-input::placeholder {
+            color: #a0906c;
+            opacity: 0.7;
+        }
+
+        .card-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+
+        .pin-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 8px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Security indicator */
+        .security-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #8b7d5d;
+        }
+
+        .security-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Buttons */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.6s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #d4c4a0 0%, #c9b896 100%);
+            color: #5d5342;
+            box-shadow: 
+                0 15px 35px rgba(212, 196, 160, 0.5),
+                0 0 50px rgba(201, 184, 150, 0.4);
+            border: 2px solid rgba(245, 245, 220, 0.6);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(212, 196, 160, 0.7),
+                0 0 80px rgba(201, 184, 150, 0.6);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #f5f5dc 0%, #f0ead6 100%);
+            color: #6b5f47;
+            box-shadow: 
+                0 15px 35px rgba(245, 245, 220, 0.5),
+                0 0 50px rgba(240, 234, 214, 0.4);
+            border: 2px solid rgba(212, 196, 160, 0.6);
+        }
+
+        .btn-back:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(245, 245, 220, 0.7),
+                0 0 80px rgba(240, 234, 214, 0.6);
+        }
+
+        .btn-icon {
+            font-size: 1.4rem;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid #5d5342;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message */
+        .error-message {
+            display: none;
+            background: linear-gradient(135deg, #ff6b6b, #ff5252);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .error-message.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Success message */
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .success-message.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(212, 196, 160, 0.4);
+            color: #a0906c;
+            font-size: 0.9rem;
+        }
+
+        /* Luxury Pattern Overlay */
+        .dollar-pattern {
+            position: fixed; /* Changed from absolute to fixed */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(245, 245, 220, 0.2) 10px, rgba(245, 245, 220, 0.2) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 196, 160, 0.1) 10px, rgba(212, 196, 160, 0.1) 20px);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .atm-machine {
+                display: none;
+            }
+            
+            .login-card {
+                padding: 2.5rem 2rem;
+                margin: 1rem;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .action-btn {
+                padding: 1rem 2rem;
+                font-size: 1.1rem;
+            }
+            
+            .main-container {
+                padding: 1rem;
+                align-items: flex-start;
+                padding-top: 2rem;
+            }
+        }
+
+        /* Small screen adjustments */
+        @media (max-height: 800px) {
+            .main-container {
+                align-items: flex-start;
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
+            
+            .login-card {
+                margin: 1rem auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="atm-background"></div>
+    <div class="atm-machine"></div>
+    <div class="dollar-pattern"></div>
+    
+    <div class="floating-elements" id="floatingElements"></div>
+    
+    <div class="main-container">
+        <div class="login-card">
+            <div class="header">
+                <div class="bank-logo">🔐</div>
+                <h1 class="main-title">Secure Login</h1>
+                <p class="subtitle">Please enter your credentials</p>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="cardNumber">
+                        💳 Card Number
+                    </label>
+                    <input 
+                        type="text" 
+                        id="cardNumber" 
+                        name="cardNumber"
+                        class="form-input card-input"
+                        placeholder="0000 0000 0000"
+                        maxlength="14"
+                        required
+                    >
+                    <div class="security-indicator">
+                        <div class="security-dot"></div>
+                        <span>256-bit encrypted</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="pin">
+                        🔢 PIN
+                    </label>
+                    <input 
+                        type="password" 
+                        id="pin" 
+                        name="pin"
+                        class="form-input pin-input"
+                        placeholder="••••"
+                        maxlength="4"
+                        pattern="[0-9]{4}"
+                        required
+                    >
+                    <div class="security-indicator">
+                        <div class="security-dot"></div>
+                        <span>Secure PIN verification</span>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="button-container">
+                <button type="submit" class="action-btn btn-login" id="loginBtn" form="loginForm">
+                    <span class="btn-icon">🔐</span>
+                    <span id="loginBtnText">Authenticate</span>
+                    <div class="loading-spinner" id="loadingSpinner"></div>
+                </button>
+                
+                <button class="action-btn btn-back" onclick="goBack()">
+                    <span class="btn-icon">⬅️</span>
+                    <a href="Welcome.html" style="color: #5d5342; text-decoration: none;"><span>Back to Home</span></a>
+                </button>
+            </div>
+            
+            <div class="footer-info">
+                <p>🔒 Your information is protected by bank-level security</p>
+                <p>© 2025 SecureBank ATM System</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8080/atm'; // Update this to your actual API base URL
+        // const API_USERNAME = 'admin'; // Update with your Basic Auth username
+        // const API_PASSWORD = 'secret123'; // Update with your Basic Auth password
+
+        // Create floating elements
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const icons = ['🔒', '🔐', '🛡️', '⚡', '🌟', '💎', '🏆', '✨', '🔑', '💰', '🎯', '👑'];
+            const count = 15;
+            
+            for (let i = 0; i < count; i++) {
+                const element = document.createElement('div');
+                element.className = 'float-icon';
+                element.textContent = icons[Math.floor(Math.random() * icons.length)];
+                
+                element.style.left = (Math.random() * 90 + 5) + '%';
+                element.style.animationDelay = (Math.random() * 25) + 's';
+                element.style.animationDuration = (Math.random() * 10 + 20) + 's';
+                element.style.fontSize = (Math.random() * 1 + 1.5) + 'rem';
+                
+                container.appendChild(element);
+            }
+        }
+
+        // Format card number input
+        function formatCardNumber(value) {
+            const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            const matches = v.match(/\d{4,16}/g);
+            const match = matches && matches[0] || '';
+            const parts = [];
+
+            for (let i = 0, len = match.length; i < len; i += 4) {
+                parts.push(match.substring(i, i + 4));
+            }
+
+            if (parts.length) {
+                return parts.join(' ');
+            } else {
+                return v;
+            }
+        }
+
+        // Card number formatting
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            const formatted = formatCardNumber(e.target.value);
+            e.target.value = formatted;
+        });
+
+        // PIN input validation
+        document.getElementById('pin').addEventListener('input', function(e) {
+            const value = e.target.value.replace(/[^0-9]/g, '');
+            e.target.value = value;
+        });
+
+        // Show message function
+        function showMessage(message, type = 'error') {
+            const errorElement = document.getElementById('errorMessage');
+            const successElement = document.getElementById('successMessage');
+            
+            
+            // Hide both messages first
+            errorElement.classList.remove('show');
+            successElement.classList.remove('show');
+            
+            if (type === 'error') {
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            } else {
+                successElement.textContent = message;
+                successElement.classList.add('show');
+            }
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                errorElement.classList.remove('show');
+                successElement.classList.remove('show');
+            }, 5000);
+        }
+
+        // Set loading state
+        function setLoadingState(loading) {
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            if (loading) {
+                loginBtn.disabled = true;
+                loginBtnText.style.display = 'none';
+                loadingSpinner.style.display = 'block';
+            } else {
+                loginBtn.disabled = false;
+                loginBtnText.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // API Login function
+        async function loginUser(cardNumber, pin) {
+            try {
+                setLoadingState(true);
+                
+                // Remove spaces from card number for API
+                const cleanCardNumber = cardNumber.replace(/\s/g, '');
+                
+                console.log('🔍 Attempting login with:', {
+                    url: `${API_BASE_URL}/login`,
+                    cardNumber: cleanCardNumber
+                });
+
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cardNumber: cleanCardNumber,
+                        pin: pin
+                    })
+                });
+
+                console.log('📡 Response status:', response.status);
+
+                // Handle different HTTP status codes
+                if (response.status === 403) {
+                    throw new Error('Access denied. Please check your API configuration.');
+                } else if (response.status === 401) {
+                    throw new Error('Invalid card number or PIN.');
+                } else if (response.status === 404) {
+                    throw new Error('API endpoint not found. Please check the server URL.');
+                } else if (response.status === 500) {
+                    throw new Error('Server error. Please try again later.');
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📦 Response data:', data);
+                    
+                    // 🔥 IMPORTANT: Store user data for other pages to access
+                    const userData = {
+                        cardNumber: cleanCardNumber,
+                        balance: data.balance || 2450.75, // Use API balance or default
+                        accountNumber: data.accountNumber || ('ACC' + cleanCardNumber.slice(-6)),
+                        customerName: data.customerName || 'Account Holder',
+                        isAuthenticated: true,
+                        loginTime: Date.now()
+                    };
+                    
+                    // Store in sessionStorage for other pages
+                    sessionStorage.setItem('atmUserData', JSON.stringify(userData));
+                    
+                    // Login successful
+                    showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'DashBoard.html';
+                    }, 2000);
+                    
+                } else {
+                    // Login failed
+                    const errorMessage = data.message || data.error || 'Login failed. Please try again.';
+                    showMessage(`❌ ${errorMessage}`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    showMessage('🔴 Cannot connect to server. Please check if the API is running.', 'error');
+                } else {
+                    showMessage(`🔴 ${error.message}`, 'error');
+                }
+            } finally {
+                setLoadingState(false);
+            }
+        }
+        // async function loginUser(cardNumber, pin) {
+        //     try {
+        //         setLoadingState(true);
+                
+        //         // Remove spaces from card number for API
+        //         const cleanCardNumber = cardNumber.replace(/\s/g, '');
+                
+        //         console.log('🔍 Attempting login with:', {
+        //             url: `${API_BASE_URL}/login`,
+        //             cardNumber: cleanCardNumber
+        //         });
+
+        //         const response = await fetch(`${API_BASE_URL}/login`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Accept': 'application/json'
+        //                 // ❌ REMOVED: 'Authorization': `Basic ${credentials}`,
+        //             },
+        //             body: JSON.stringify({
+        //                 cardNumber: cleanCardNumber,
+        //                 pin: pin
+        //             })
+        //         });
+
+        //         console.log('📡 Response status:', response.status);
+
+        //         // Handle different HTTP status codes
+        //         if (response.status === 403) {
+        //             throw new Error('Access denied. Please check your API configuration.');
+        //         } else if (response.status === 401) {
+        //             throw new Error('Invalid card number or PIN.');
+        //         } else if (response.status === 404) {
+        //             throw new Error('API endpoint not found. Please check the server URL.');
+        //         } else if (response.status === 500) {
+        //             throw new Error('Server error. Please try again later.');
+        //         }
+
+        //         const data = await response.json();
+        //         console.log('📦 Response data:', data);
+
+        //         if (response.ok) {
+        //             // Login successful
+        //             showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
+                    
+        //             setTimeout(() => {
+        //                 window.location.href = 'DashBoard.html';
+        //             }, 2000);
+                    
+        //         } else {
+        //             // Login failed
+        //             const errorMessage = data.message || data.error || 'Login failed. Please try again.';
+        //             showMessage(`❌ ${errorMessage}`, 'error');
+        //         }
+                
+        //     } catch (error) {
+        //         console.error('❌ Login error:', error);
+                
+        //         if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        //             showMessage('🔴 Cannot connect to server. Please check if the API is running.', 'error');
+        //         } else {
+        //             showMessage(`🔴 ${error.message}`, 'error');
+        //         }
+        //     } finally {
+        //         setLoadingState(false);
+        //     }
+        // }
+        // async function loginUser(cardNumber, pin) {
+        //     try {
+        //         setLoadingState(true);
+                
+        //         // Remove spaces from card number for API
+        //         const cleanCardNumber = cardNumber.replace(/\s/g, '');
+                
+        //         // Create Basic Auth header
+        //         const credentials = btoa(`${API_USERNAME}:${API_PASSWORD}`);
+                
+        //         const response = await fetch(`${API_BASE_URL}/login`, {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Authorization': `Basic ${credentials}`
+        //             },
+        //             body: JSON.stringify({
+        //                 cardNumber: cleanCardNumber,
+        //                 pin: pin
+        //             })
+        //         });
+
+        //         const data = await response.json();
+
+        //         if (response.ok) {
+        //             // Login successful
+        //             showMessage('🎉 Login successful! Redirecting to dashboard...', 'success');
+                    
+        //             // Store user session (in a real app, use secure storage)
+        //             const userData = {
+        //                 cardNumber: cleanCardNumber,
+        //                 loginTime: new Date().toISOString(),
+        //                 ...data
+        //             };
+                    
+        //             // Simulate redirect to dashboard after 2 seconds
+        //             setTimeout(() => {
+        //                 alert('🏦 Welcome to your ATM Dashboard!\n\nNext: We\'ll create the main ATM interface with balance inquiry, withdrawal, deposit, and transfer options.');
+        //             }, 2000);
+                    
+        //         } else {
+        //             // Login failed
+        //             const errorMessage = data.message || 'Invalid credentials. Please try again.';
+        //             showMessage(`❌ ${errorMessage}`, 'error');
+        //         }
+                
+        //     } catch (error) {
+        //         console.error('Login error:', error);
+        //         showMessage('🔴 Connection error. Please check your network and try again.', 'error');
+        //     } finally {
+        //         setLoadingState(false);
+        //     }
+        // }
+
+        // Form submission handler
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const cardNumber = document.getElementById('cardNumber').value.trim();
+            const pin = document.getElementById('pin').value.trim();
+            
+            // Validation
+            if (!cardNumber || cardNumber.replace(/\s/g, '').length !== 12) {
+                showMessage('❌ Please enter a valid card number (12 digits)', 'error');
+                return;
+            }
+            
+            if (!pin || pin.length !== 4) {
+                showMessage('❌ Please enter a valid 4-digit PIN', 'error');
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(pin)) {
+                showMessage('❌ PIN must contain only numbers', 'error');
+                return;
+            }
+            
+            // Proceed with login
+            await loginUser(cardNumber, pin);
+        });
+
+        // Back button functionality
+        function goBack() {
+            if (confirm('Are you sure you want to go back to the welcome page?')) {
+                // In a real application, this would navigate to the previous page
+                alert('🔙 Redirecting to Welcome Page...');
+            }
+        }
+
+        // Add ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Enhanced button interactions
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function(event) {
+                if (this.disabled) return;
+                
+                // Create ripple effect
+                const ripple = document.createElement('div');
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.6);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    pointer-events: none;
+                `;
+                
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = (event.clientX - rect.left - size / 2) + 'px';
+                ripple.style.top = (event.clientY - rect.top - size / 2) + 'px';
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+            
+            btn.addEventListener('mouseenter', () => {
+                if (!btn.disabled) {
+                    btn.style.filter = 'brightness(1.1)';
+                }
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                btn.style.filter = 'brightness(1)';
+            });
+        });
+
+        // Parallax effect for background
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            document.querySelector('.atm-background').style.backgroundPosition = 
+                `${50 + x * 0.1}% ${50 + y * 0.1}%`;
+        });
+
+        // Enhanced form interactions
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Enter key to submit form
+            if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+            
+            // Escape key to go back
+            if (e.key === 'Escape') {
+                goBack();
+            }
+        });
+
+        // Demo mode for testing (remove in production)
+        function enableDemoMode() {
+            console.log('🎭 Demo Mode Enabled - Use card: 123456789012, PIN: 1234');
+            
+            // Add demo button (for testing purposes)
+            const demoBtn = document.createElement('button');
+            demoBtn.innerHTML = '🎭 Demo Login';
+            demoBtn.className = 'action-btn btn-back';
+            demoBtn.style.marginTop = '1rem';
+            demoBtn.style.opacity = '0.7';
+            demoBtn.style.fontSize = '0.9rem';
+            
+            demoBtn.addEventListener('click', function() {
+                document.getElementById('cardNumber').value = '1234 5678 9012';
+                document.getElementById('pin').value = '1234';
+                showMessage('🎭 Demo credentials loaded! Click "Authenticate" to continue.', 'success');
+            });
+            
+            document.querySelector('.button-container').appendChild(demoBtn);
+        }
+
+        // Card type detection
+        function detectCardType(cardNumber) {
+            const cleanNumber = cardNumber.replace(/\s/g, '');
+            
+            if (cleanNumber.startsWith('4')) return 'Visa';
+            if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) return 'Mastercard';
+            if (cleanNumber.startsWith('3')) return 'American Express';
+            if (cleanNumber.startsWith('6')) return 'Discover';
+            
+            return 'Unknown';
+        }
+
+        // Add card type indicator
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            const cardType = detectCardType(e.target.value);
+            const indicator = document.querySelector('.card-type-indicator') || document.createElement('div');
+            
+            if (!document.querySelector('.card-type-indicator')) {
+                indicator.className = 'card-type-indicator';
+                indicator.style.cssText = `
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    font-size: 0.9rem;
+                    color: #8b7d5d;
+                    font-weight: 600;
+                `;
+                e.target.parentElement.style.position = 'relative';
+                e.target.parentElement.appendChild(indicator);
+            }
+            
+            const cardIcons = {
+                'Visa': '💳',
+                'Mastercard': '💳',
+                'American Express': '💳',
+                'Discover': '💳',
+                'Unknown': ''
+            };
+            
+            indicator.textContent = cardIcons[cardType] + ' ' + (cardType !== 'Unknown' ? cardType : '');
+        });
+
+        // Security features
+        let loginAttempts = 0;
+        const maxAttempts = 3;
+        const lockoutTime = 300000; // 5 minutes in milliseconds
+
+        function checkLoginAttempts() {
+            const lastAttempt = localStorage.getItem('lastFailedAttempt');
+            const attempts = localStorage.getItem('loginAttempts') || 0;
+            
+            if (lastAttempt && attempts >= maxAttempts) {
+                const timeSinceLastAttempt = Date.now() - parseInt(lastAttempt);
+                if (timeSinceLastAttempt < lockoutTime) {
+                    const remainingTime = Math.ceil((lockoutTime - timeSinceLastAttempt) / 60000);
+                    showMessage(`🔒 Account temporarily locked. Try again in ${remainingTime} minutes.`, 'error');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function recordFailedAttempt() {
+            loginAttempts++;
+            localStorage.setItem('loginAttempts', loginAttempts.toString());
+            localStorage.setItem('lastFailedAttempt', Date.now().toString());
+            
+            if (loginAttempts >= maxAttempts) {
+                showMessage(`🔒 Too many failed attempts. Account locked for 5 minutes.`, 'error');
+            } else {
+                const remaining = maxAttempts - loginAttempts;
+                showMessage(`❌ Invalid credentials. ${remaining} attempts remaining.`, 'error');
+            }
+        }
+
+        function clearFailedAttempts() {
+            localStorage.removeItem('loginAttempts');
+            localStorage.removeItem('lastFailedAttempt');
+            loginAttempts = 0;
+        }
+
+        // Update the loginUser function to include security checks
+        const originalLoginUser = loginUser;
+        loginUser = async function(cardNumber, pin) {
+            if (!checkLoginAttempts()) {
+                return;
+            }
+            
+            try {
+                await originalLoginUser(cardNumber, pin);
+                clearFailedAttempts(); // Clear on successful login
+            } catch (error) {
+                recordFailedAttempt();
+                throw error;
+            }
+        };
+
+        // Auto-focus on first input
+        window.addEventListener('load', () => {
+            createFloatingElements();
+            document.getElementById('cardNumber').focus();
+            
+            // Enable demo mode in development
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                enableDemoMode();
+            }
+            
+            // Add entrance animation to form elements
+            const formGroups = document.querySelectorAll('.form-group');
+            formGroups.forEach((group, index) => {
+                group.style.opacity = '0';
+                group.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    group.style.transition = 'all 0.6s ease';
+                    group.style.opacity = '1';
+                    group.style.transform = 'translateY(0)';
+                }, (index + 1) * 200);
+            });
+        });
+
+        // Accessibility improvements
+        document.addEventListener('keydown', function(e) {
+            // Tab navigation enhancement
+            if (e.key === 'Tab') {
+                const focusableElements = document.querySelectorAll(
+                    'input, button, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
+        });
+
+        // Input validation feedback
+        function validateInput(input) {
+            const value = input.value.trim();
+            let isValid = true;
+            let message = '';
+            
+            if (input.id === 'cardNumber') {
+                const cleanNumber = value.replace(/\s/g, '');
+                if (cleanNumber.length != 12) {
+                    isValid = false;
+                    message = 'Card number must be 12 digits';
+                } else if (!/^\d+$/.test(cleanNumber)) {
+                    isValid = false;
+                    message = 'Card number must contain only digits';
+                }
+            } else if (input.id === 'pin') {
+                if (value.length !== 4) {
+                    isValid = false;
+                    message = 'PIN must be exactly 4 digits';
+                } else if (!/^\d{4}$/.test(value)) {
+                    isValid = false;
+                    message = 'PIN must contain only numbers';
+                }
+            }
+            
+            // Visual feedback
+            if (isValid) {
+                input.style.borderColor = 'rgba(76, 175, 80, 0.6)';
+                input.style.boxShadow = '0 0 0 2px rgba(76, 175, 80, 0.2)';
+            } else {
+                input.style.borderColor = 'rgba(255, 107, 107, 0.6)';
+                input.style.boxShadow = '0 0 0 2px rgba(255, 107, 107, 0.2)';
+            }
+            
+            return { isValid, message };
+        }
+
+        // Real-time validation
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                validateInput(this);
+            });
+            
+            input.addEventListener('input', function() {
+                // Reset validation styling on input
+                this.style.borderColor = '';
+                this.style.boxShadow = '';
+            });
+        });
+
+        console.log('🏦 SecureBank ATM Login System Initialized');
+        console.log('💡 Features: Real-time validation, security lockout, card type detection');
+        console.log('🔒 Security: Basic Auth, attempt limiting, input sanitization');
+    </script>
+</body>
+</html>
